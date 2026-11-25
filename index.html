@@ -2,1289 +2,1830 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>Endorphin 2.1.4 — iPhone X+ Jailbreak Simulator</title>
-
-  <!-- iOS PWA Meta Tags -->
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Endorphin" />
-  <meta name="theme-color" content="#0a0a0c" />
-  <meta name="description" content="Interactive iPhone X+ Simulator with Endorphin 2.1.4 Fake Jailbreak & Package Managers" />
-
-  <link rel="manifest" id="pwa-manifest" />
-  <link rel="apple-touch-icon" id="apple-touch-icon" />
-  <link rel="icon" type="image/png" id="favicon-icon" />
-
-  <!-- Tailwind CSS -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>iOS Jailbreak Simulator — voidra1n</title>
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- React 18 & Babel Standalone -->
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
-  <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
-
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --iphone-w: 390px;
+      --iphone-h: 844px;
+      --spring-ease: cubic-bezier(0.22, 1, 0.36, 1);
+      --ios-bounce: cubic-bezier(0.32, 0.72, 0, 1);
+    }
+
     * {
       box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
       user-select: none;
-      -webkit-user-select: none;
     }
 
-    input, textarea {
-      user-select: text;
-      -webkit-user-select: text;
-    }
-
-    html, body, #root {
+    html, body {
       margin: 0;
       padding: 0;
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background-color: #050507;
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", sans-serif;
-      -webkit-font-smoothing: antialiased;
-      touch-action: none;
+      background: radial-gradient(circle at 50% 25%, #1e1b2e 0%, #09090d 75%, #030305 100%);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
     }
 
-    .font-mono-code {
-      font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    /* Ambient background glow behind iPhone */
+    .ambient-glow {
+      position: fixed;
+      width: 520px;
+      height: 520px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(139, 92, 246, 0.18) 0%, rgba(59, 130, 246, 0.08) 45%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+      filter: blur(40px);
     }
 
-    /* Realistic iOS Wallpapers */
-    .ios-wallpaper {
+    /* Responsive scaler wrapper so iPhone fits any viewport cleanly */
+    #device-stage {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform-origin: center center;
+    }
+
+    /* Realistic Titanium iPhone 15 Pro Chassis */
+    .iphone-chassis {
+      position: relative;
+      width: var(--iphone-w);
+      height: var(--iphone-h);
+      border-radius: 56px;
+      padding: 12px;
+      background: linear-gradient(145deg, #4b4b52 0%, #242429 22%, #18181c 50%, #2c2c32 82%, #52525a 100%);
+      box-shadow:
+        0 0 0 1.5px rgba(255, 255, 255, 0.16),
+        0 30px 80px rgba(0, 0, 0, 0.85),
+        0 0 40px rgba(124, 58, 237, 0.15),
+        inset 0 0 4px rgba(255, 255, 255, 0.25);
+    }
+
+    /* Side Hardware Buttons */
+    .hw-btn {
+      position: absolute;
+      background: linear-gradient(180deg, #3f3f46, #27272a, #3f3f46);
+      border-radius: 3px;
+      box-shadow: inset 0 0 1px rgba(255,255,255,0.3);
+    }
+    .btn-action { left: -3.5px; top: 132px; width: 3.5px; height: 28px; }
+    .btn-vol-up { left: -3.5px; top: 180px; width: 3.5px; height: 54px; }
+    .btn-vol-down { left: -3.5px; top: 248px; width: 3.5px; height: 54px; }
+    .btn-power { right: -3.5px; top: 205px; width: 3.5px; height: 84px; }
+
+    /* Inner OLED Display Bezel */
+    .iphone-screen {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: 45px;
+      overflow: hidden;
+      background: #000;
+      box-shadow: inset 0 0 0 2px #000;
+    }
+
+    /* Dynamic Island */
+    .dynamic-island {
+      position: absolute;
+      top: 11px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 118px;
+      height: 34px;
+      background: #000;
+      border-radius: 20px;
+      z-index: 90;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.6), inset 0 0 1px rgba(255,255,255,0.12);
+      transition: width 0.35s var(--spring-ease), height 0.35s var(--spring-ease);
+    }
+    .dynamic-island.expanded {
+      width: 210px;
+      height: 38px;
+    }
+    .di-camera {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #2b3a67 0%, #0d1326 60%, #05070d 100%);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    /* Status Bar */
+    .status-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 52px;
+      padding: 14px 26px 0 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 85;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      pointer-events: none;
+      color: #fff;
+      transition: opacity 0.25s ease;
+    }
+
+    /* iOS Mesh Wallpaper */
+    .wallpaper {
+      position: absolute;
+      inset: 0;
       background:
-        radial-gradient(circle at 18% 22%, rgba(255, 79, 94, 0.58) 0%, transparent 48%),
-        radial-gradient(circle at 82% 28%, rgba(88, 86, 214, 0.65) 0%, transparent 52%),
-        radial-gradient(circle at 75% 78%, rgba(255, 149, 0, 0.42) 0%, transparent 50%),
-        radial-gradient(circle at 22% 82%, rgba(10, 132, 255, 0.55) 0%, transparent 52%),
-        linear-gradient(160deg, #0b0d1a 0%, #1c122e 45%, #2a1024 78%, #090a12 100%);
+        radial-gradient(circle at 18% 20%, #4f46e5 0%, transparent 48%),
+        radial-gradient(circle at 85% 18%, #ec4899 0%, transparent 45%),
+        radial-gradient(circle at 75% 78%, #7c3aed 0%, transparent 52%),
+        radial-gradient(circle at 20% 85%, #0ea5e9 0%, transparent 50%),
+        linear-gradient(160deg, #0f172a 0%, #1e1b4b 50%, #090d16 100%);
+      background-size: 140% 140%;
+      animation: auroraShift 18s ease-in-out infinite alternate;
+      z-index: 1;
+      transition: transform 0.5s var(--spring-ease), filter 0.4s ease;
+    }
+    @keyframes auroraShift {
+      0% { background-position: 0% 0%; }
+      100% { background-position: 100% 100%; }
     }
 
-    /* Endorphin App Gradient */
-    .endorphin-bg {
-      background: linear-gradient(180deg, #4b1214 0%, #7d191c 45%, #8f1d20 75%, #470e10 100%);
+    /* Home Screen Layer */
+    #home-screen {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 68px 22px 24px;
+      transform: scale(1);
+      opacity: 1;
+      transition: transform 0.45s var(--spring-ease), opacity 0.35s ease;
+    }
+    #home-screen.behind-lock {
+      transform: scale(0.92);
+      opacity: 0.4;
     }
 
-    /* Frosted Glass Cards */
-    .glass-card {
-      background: rgba(25, 10, 12, 0.48);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+    /* App Grid */
+    .app-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px 16px;
+      align-content: start;
     }
 
+    .app-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+    .app-item:active {
+      transform: scale(0.88);
+    }
+    .app-item.newly-installed {
+      animation: appPopIn 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+    @keyframes appPopIn {
+      0% { transform: scale(0); opacity: 0; }
+      70% { transform: scale(1.1); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .app-icon-box {
+      position: relative;
+      width: 60px;
+      height: 60px;
+      border-radius: 15px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.32), inset 0 1px 1px rgba(255, 255, 255, 0.25);
+    }
+    .app-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: #fff;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 72px;
+    }
+
+    /* Bottom Frosted Dock */
     .ios-dock {
-      background: rgba(255, 255, 255, 0.18);
+      width: 100%;
+      height: 92px;
+      border-radius: 30px;
+      background: rgba(255, 255, 255, 0.22);
       backdrop-filter: blur(28px);
       -webkit-backdrop-filter: blur(28px);
       border: 1px solid rgba(255, 255, 255, 0.18);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      align-items: center;
+      padding: 0 12px;
+      margin-bottom: 6px;
     }
 
-    /* App Open / Close Zoom Animation */
-    @keyframes appZoomOpen {
-      0% {
-        opacity: 0.4;
-        transform: scale(0.78);
-        border-radius: 44px;
-      }
-      100% {
-        opacity: 1;
-        transform: scale(1);
-        border-radius: 0px;
-      }
+    /* Lock Screen Curtain */
+    #lock-screen {
+      position: absolute;
+      inset: 0;
+      z-index: 40;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      padding: 68px 28px 34px;
+      background:
+        radial-gradient(circle at 22% 18%, rgba(99, 102, 241, 0.92) 0%, transparent 52%),
+        radial-gradient(circle at 82% 22%, rgba(236, 72, 153, 0.88) 0%, transparent 48%),
+        radial-gradient(circle at 70% 82%, rgba(139, 92, 246, 0.9) 0%, transparent 55%),
+        linear-gradient(165deg, #0b1120 0%, #1e1b4b 55%, #090d16 100%);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+      will-change: transform, opacity;
+    }
+    #lock-screen.smooth-transition {
+      transition: transform 0.45s var(--spring-ease), opacity 0.38s ease;
+    }
+    #lock-screen.unlocked {
+      transform: translateY(-105%);
+      opacity: 0;
+      pointer-events: none;
     }
 
-    .animate-app-open {
-      animation: appZoomOpen 0.34s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    .lock-time {
+      font-size: 82px;
+      font-weight: 700;
+      line-height: 0.95;
+      letter-spacing: -0.04em;
+      color: rgba(255, 255, 255, 0.94);
+      text-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
     }
 
-    /* Newly Installed Icon Pop Animation */
-    @keyframes iconPopIn {
-      0% {
-        opacity: 0;
-        transform: scale(0.2) translateY(16px);
-      }
-      65% {
-        opacity: 1;
-        transform: scale(1.12) translateY(-3px);
-      }
-      100% {
-        opacity: 1;
-        transform: scale(1) translateY(0);
-      }
-    }
-
-    .animate-icon-install {
-      animation: iconPopIn 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-    }
-
-    /* iOS Spinner */
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    .ios-spinner {
-      width: 17px;
-      height: 17px;
-      border: 2.2px solid rgba(255, 255, 255, 0.22);
-      border-top-color: #ffffff;
+    .lock-action-btn {
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
-      animation: spin 0.72s linear infinite;
-      flex-shrink: 0;
+      background: rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .lock-action-btn:active {
+      transform: scale(1.15);
+    }
+    .lock-action-btn.active {
+      background: #fff;
+      color: #0f172a;
+      box-shadow: 0 0 24px rgba(255, 255, 255, 0.8);
     }
 
-    /* Boot Logo Glow */
-    @keyframes logoPulse {
-      0%, 100% { filter: drop-shadow(0 0 16px rgba(255, 90, 95, 0.5)); transform: scale(1); }
-      50% { filter: drop-shadow(0 0 28px rgba(255, 165, 120, 0.85)); transform: scale(1.04); }
+    .swipe-hint {
+      animation: pulseFloat 2.4s ease-in-out infinite;
+    }
+    @keyframes pulseFloat {
+      0%, 100% { opacity: 0.65; transform: translateY(0); }
+      50% { opacity: 1; transform: translateY(-4px); }
     }
 
-    .boot-logo-glow {
-      animation: logoPulse 2.2s ease-in-out infinite;
+    /* Active App Window Container */
+    #app-window {
+      position: absolute;
+      inset: 0;
+      z-index: 30;
+      background: #000;
+      border-radius: 45px;
+      overflow: hidden;
+      transform-origin: center center;
+      opacity: 0;
+      pointer-events: none;
+      will-change: transform, border-radius, opacity;
+    }
+    #app-window.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    #app-window.spring-anim {
+      transition: transform 0.44s var(--spring-ease), border-radius 0.44s var(--spring-ease), opacity 0.3s ease;
     }
 
-    /* Hide scrollbars cleanly while preserving vertical touch scrolling */
-    .scroll-area {
-      overflow-y: auto;
-      overflow-x: hidden;
-      -webkit-overflow-scrolling: touch;
-      touch-action: pan-y;
+    /* Home Indicator & Interactive Gesture Zone */
+    #gesture-zone {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 44px;
+      z-index: 95;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 9px;
+      cursor: grab;
+      touch-action: none;
     }
-    .scroll-area::-webkit-scrollbar {
+    #gesture-zone:active {
+      cursor: grabbing;
+    }
+    .home-indicator {
+      width: 136px;
+      height: 5px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.88);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+    #gesture-zone:hover .home-indicator {
+      transform: scaleX(1.06);
+      background: #fff;
+    }
+
+    /* Terminal Styling for voidra1n */
+    .terminal-font {
+      font-family: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+    .terminal-input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #4ade80;
+      font-family: 'Fira Code', monospace;
+      font-size: 13px;
+      width: 140px;
+      caret-color: #4ade80;
+    }
+
+    /* Crash Glitch Effect */
+    @keyframes crashGlitch {
+      0% { transform: translate(0, 0) skew(0deg); filter: hue-rotate(0deg) contrast(100%); }
+      20% { transform: translate(-8px, 4px) skew(-6deg); filter: hue-rotate(90deg) contrast(220%); }
+      40% { transform: translate(10px, -5px) skew(8deg); filter: invert(1) contrast(180%); }
+      60% { transform: translate(-6px, -3px) skew(-4deg); filter: hue-rotate(240deg) saturate(300%); }
+      80% { transform: translate(6px, 5px) skew(5deg); filter: invert(0) contrast(250%); }
+      100% { transform: translate(0, 0) skew(0deg); filter: none; }
+    }
+    .crashed {
+      animation: crashGlitch 0.48s steps(2, end) forwards !important;
+    }
+
+    /* Boot & Respring Overlay */
+    #boot-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 100;
+      background: #000;
       display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
     }
-    .scroll-area {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
+    #boot-overlay.active {
+      display: flex;
+    }
+
+    /* Classic iOS 12-spoke Respring Spinner */
+    .ios-spinner {
+      position: relative;
+      width: 34px;
+      height: 34px;
+    }
+    .ios-spinner div {
+      position: absolute;
+      left: 15.5px;
+      top: 2px;
+      width: 3px;
+      height: 9px;
+      border-radius: 2px;
+      background: #fff;
+      transform-origin: 1.5px 15px;
+      animation: iosSpin 1s linear infinite;
+    }
+    @keyframes iosSpin {
+      0% { opacity: 1; }
+      100% { opacity: 0.15; }
+    }
+
+    /* Custom Scrollbar inside apps */
+    .app-scroll::-webkit-scrollbar {
+      width: 0px;
+      height: 0px;
     }
   </style>
 </head>
 <body>
-  <div id="root"></div>
+  <div class="ambient-glow"></div>
 
-  <script type="text/babel">
-    const { useState, useEffect, useRef, useMemo, useCallback } = React;
+  <!-- Responsive Device Stage -->
+  <div id="device-stage">
+    <div class="iphone-chassis" id="iphone-chassis">
+      <!-- Hardware Buttons -->
+      <div class="hw-btn btn-action" title="Кнопка действия"></div>
+      <div class="hw-btn btn-vol-up" title="Громкость +"></div>
+      <div class="hw-btn btn-vol-down" title="Громкость -"></div>
+      <div class="hw-btn btn-power" id="btn-power" title="Блокировка экрана"></div>
 
-    /* =========================================================================
-       1. PWA MANIFEST & APPLE-TOUCH-ICON GENERATOR
-    ========================================================================= */
-    function initPWAManifest() {
-      try {
-        const canvas = document.createElement('canvas');
-        canvas.width = 512;
-        canvas.height = 512;
-        const ctx = canvas.getContext('2d');
+      <!-- Display -->
+      <div class="iphone-screen" id="iphone-screen">
+        <!-- Wallpaper -->
+        <div class="wallpaper" id="wallpaper"></div>
 
-        // Crimson-burgundy background
-        const bgGrad = ctx.createLinearGradient(0, 0, 512, 512);
-        bgGrad.addColorStop(0, '#4a0f14');
-        bgGrad.addColorStop(0.55, '#21070a');
-        bgGrad.addColorStop(1, '#0d0304');
-        ctx.fillStyle = bgGrad;
-        ctx.fillRect(0, 0, 512, 512);
+        <!-- Status Bar -->
+        <div class="status-bar" id="status-bar">
+          <div id="sb-time">16:48</div>
+          <div class="flex items-center gap-1.5">
+            <!-- Cellular Signal -->
+            <svg width="16" height="11" viewBox="0 0 16 11" fill="currentColor">
+              <rect x="0" y="7" width="2.8" height="4" rx="0.8"/>
+              <rect x="4.2" y="5" width="2.8" height="6" rx="0.8"/>
+              <rect x="8.4" y="2.5" width="2.8" height="8.5" rx="0.8"/>
+              <rect x="12.6" y="0" width="2.8" height="11" rx="0.8"/>
+            </svg>
+            <!-- Wi-Fi -->
+            <svg width="15" height="11" viewBox="0 0 16 12" fill="currentColor">
+              <path d="M8 9.6a1.4 1.4 0 1 0 0 2.8 1.4 1.4 0 0 0 0-2.8zm-3.6-2.2a5.2 5.2 0 0 1 7.2 0l1.2-1.3a7 7 0 0 0-9.6 0l1.2 1.3zm-2.8-2.8a9.2 9.2 0 0 1 12.8 0l1.2-1.3a11 11 0 0 0-15.2 0l1.2 1.3z"/>
+            </svg>
+            <!-- Battery -->
+            <div class="flex items-center">
+              <div class="w-[23px] h-[11.5px] rounded-[3.5px] border border-white/45 p-[1.5px] flex items-center">
+                <div class="w-full h-full bg-white rounded-[1.8px]"></div>
+              </div>
+              <div class="w-[1.5px] h-[4px] bg-white/50 rounded-r-sm ml-[1px]"></div>
+            </div>
+          </div>
+        </div>
 
-        // Ambient radial glow
-        const glow = ctx.createRadialGradient(256, 260, 20, 256, 260, 220);
-        glow.addColorStop(0, 'rgba(255, 69, 58, 0.38)');
-        glow.addColorStop(1, 'rgba(255, 69, 58, 0)');
-        ctx.fillStyle = glow;
-        ctx.fillRect(0, 0, 512, 512);
+        <!-- Dynamic Island -->
+        <div class="dynamic-island" id="dynamic-island">
+          <div id="di-left" class="text-[11px] font-medium text-purple-300 opacity-0 transition-opacity"></div>
+          <div class="di-camera"></div>
+        </div>
 
-        // Endorphin droplet emblem
-        const dropGrad = ctx.createLinearGradient(150, 95, 360, 420);
-        dropGrad.addColorStop(0, '#ff6b6b');
-        dropGrad.addColorStop(0.5, '#e62e35');
-        dropGrad.addColorStop(1, '#8c1519');
+        <!-- HOME SCREEN -->
+        <div id="home-screen" class="behind-lock">
+          <!-- Main App Icons Grid -->
+          <div class="app-grid" id="home-grid">
+            <!-- Apps rendered dynamically via JS -->
+          </div>
 
-        ctx.beginPath();
-        ctx.moveTo(256, 92);
-        ctx.bezierCurveTo(256, 92, 378, 225, 378, 312);
-        ctx.bezierCurveTo(378, 380, 323, 428, 256, 428);
-        ctx.bezierCurveTo(189, 428, 134, 380, 134, 312);
-        ctx.bezierCurveTo(134, 225, 256, 92, 256, 92);
-        ctx.closePath();
-        ctx.fillStyle = dropGrad;
-        ctx.fill();
+          <!-- Bottom Glass Dock -->
+          <div class="ios-dock" id="home-dock">
+            <!-- Dock apps rendered dynamically via JS -->
+          </div>
+        </div>
 
-        // Neural pulse wave inside droplet
-        ctx.beginPath();
-        ctx.moveTo(180, 308);
-        ctx.bezierCurveTo(208, 274, 234, 340, 260, 302);
-        ctx.bezierCurveTo(286, 264, 308, 318, 332, 292);
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 20;
-        ctx.lineCap = 'round';
-        ctx.stroke();
+        <!-- ACTIVE APPLICATION WINDOW -->
+        <div id="app-window">
+          <div id="app-content" class="w-full h-full"></div>
+        </div>
 
-        // Top dot
-        ctx.beginPath();
-        ctx.arc(256, 194, 15, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255,255,255,0.9)';
-        ctx.fill();
+        <!-- LOCK SCREEN CURTAIN -->
+        <div id="lock-screen">
+          <div class="flex flex-col items-center mt-4 text-center">
+            <!-- Lock Glyph -->
+            <svg class="w-5 h-5 mb-2 text-white/90" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17 9h-1V7a4 4 0 0 0-8 0v2H7a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2zm-7-2a2 2 0 1 1 4 0v2h-4V7z"/>
+            </svg>
+            <div id="ls-date" class="text-[17px] font-medium text-white/90 tracking-tight mb-1">Понедельник, 23 ноября</div>
+            <div id="ls-time" class="lock-time">16:48</div>
+          </div>
 
-        const iconUrl = canvas.toDataURL('image/png');
-        const appleLink = document.getElementById('apple-touch-icon');
-        const favLink = document.getElementById('favicon-icon');
-        if (appleLink) appleLink.href = iconUrl;
-        if (favLink) favLink.href = iconUrl;
+          <!-- Jailbreak Badge if active -->
+          <div id="ls-jb-badge" class="hidden px-3.5 py-1.5 rounded-full bg-black/35 backdrop-blur-md border border-purple-400/30 text-xs font-medium text-purple-200 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>voidra1n • Rootless Active</span>
+          </div>
 
-        const manifest = {
-          name: 'Endorphin — iPhone Simulator',
-          short_name: 'Endorphin',
-          description: 'Interactive iPhone X+ Simulator with Endorphin 2.1.4 Fake Jailbreak',
-          start_url: window.location.href,
-          display: 'standalone',
-          orientation: 'portrait',
-          background_color: '#050507',
-          theme_color: '#050507',
-          icons: [{ src: iconUrl, sizes: '512x512', type: 'image/png', purpose: 'any maskable' }]
-        };
+          <!-- Bottom Controls & Swipe Prompt -->
+          <div class="w-full flex flex-col items-center gap-4">
+            <div class="w-full flex items-center justify-between px-3">
+              <button class="lock-action-btn" id="btn-flashlight" title="Фонарик">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M9 2h6l1 5-2 3v12h-4V10L8 7l1-5z"/>
+                  <line x1="9" y1="6" x2="15" y2="6"/>
+                </svg>
+              </button>
 
-        const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
-        const manifestLink = document.getElementById('pwa-manifest');
-        if (manifestLink) manifestLink.href = URL.createObjectURL(blob);
-      } catch (e) {
-        console.warn('Manifest generation skipped:', e);
-      }
-    }
+              <div class="swipe-hint text-[12px] font-medium text-white/85 tracking-wide text-center px-2">
+                Смахните вверх для разблокировки
+              </div>
 
-    /* =========================================================================
-       2. STATIC CATALOGS (TWEAKS, REPOSITORIES, APP DEFINITIONS)
-    ========================================================================= */
-    const DEFAULT_REPOS = [
-      { id: 'havoc', name: 'Havoc', url: 'https://havoc.app', packagesCount: 1420, iconColor: '#ef4444' },
-      { id: 'chariz', name: 'Chariz', url: 'https://repo.chariz.com', packagesCount: 890, iconColor: '#3b82f6' },
-      { id: 'bigboss', name: 'BigBoss', url: 'http://apt.thebigboss.org/repofiles/cydia', packagesCount: 24500, iconColor: '#f59e0b' },
-      { id: 'ellekit', name: 'ElleKit Official', url: 'https://ellekit.space', packagesCount: 14, iconColor: '#10b981' },
-      { id: 'sparkdev', name: 'SparkDev', url: 'https://sparkdev.me', packagesCount: 68, iconColor: '#8b5cf6' }
-    ];
+              <button class="lock-action-btn" id="btn-camera" title="Камера">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                  <circle cx="12" cy="13" r="4"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
 
-    const TWEAKS_CATALOG = [
-      {
-        id: 'gravitation',
-        name: 'Gravitation',
-        version: '1.0.0',
-        author: 'kritanta',
-        repo: 'Chariz',
-        category: 'Tweaks',
-        featured: true,
-        bannerGradient: 'from-violet-600 via-fuchsia-600 to-rose-600',
-        iconBg: 'bg-gradient-to-br from-violet-500 to-fuchsia-600',
-        shortDesc: 'Добавляет реальную 2D-физику гравитации, столкновений и наклона для иконок Home Screen.',
-        fullDesc: 'Культовый джейлбрейк-твик Gravitation! Встряхните iPhone на домашнем экране, чтобы все иконки сорвались с мест под действием гравитации, начали сталкиваться, отскакивать и вращаться. Поддерживает наклон устройства, перетаскивание и броски иконок, гравитацию Dock и гибкие настройки физики.',
-        size: '784 KB',
-        updated: '2026-11-20'
-      },
-      {
-        id: 'cylinder-remade',
-// ... existing code ... -->
-      {
-        id: 'newterm3',
-        name: 'NewTerm 3 Beta',
-        version: '3.0~beta2',
-        author: 'HASHBANG',
-        repo: 'Chariz',
-        category: 'Terminal',
-        featured: false,
-        bannerGradient: 'from-zinc-700 to-neutral-950',
-        iconBg: 'bg-gradient-to-br from-zinc-600 to-zinc-900',
-        shortDesc: 'Эмулятор терминала для iOS с поддержкой вкладок и жестов.',
-        fullDesc: 'Быстрый и отзывчивый терминал с поддержкой цветовых тем, горячих клавиш и локальной оболочки симулятора.',
-        size: '2.1 MB',
-        updated: '2026-10-05'
-      }
-    ];
+        <!-- BOOT / RESPRING OVERLAY -->
+        <div id="boot-overlay">
+          <!-- Custom Apple + Checkra1n Style Chess Boot Logo -->
+          <div id="boot-apple-stage" class="hidden relative flex items-center justify-center w-36 h-36">
+            <!-- Classic White Apple SVG -->
+            <svg class="w-24 h-24 text-white" viewBox="0 0 170 170" fill="currentColor">
+              <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.13-1.9-14.34-6.08-3.69-3.03-7.61-7.82-11.77-14.37-5.08-7.96-9.25-17.18-12.5-27.67-3.25-10.48-4.88-20.53-4.88-30.14 0-11.26 2.83-20.69 8.49-28.29 5.66-7.6 12.77-11.53 21.33-11.78 4.35 0 9.44 1.32 15.27 3.95 5.82 2.63 9.57 3.98 11.25 4.05 1.34 0 5.42-1.56 12.23-4.69 6.81-3.12 12.57-4.46 17.27-4.01 12.83 1.04 22.49 6.09 28.97 15.16-11.49 6.96-17.13 16.65-16.92 29.06.21 9.69 3.84 17.75 10.89 24.18 4.86 4.46 10.56 7.36 17.1 8.71-1.39 4.15-2.97 8.15-4.74 12.01zM119.22 31.01c0 7.57-2.77 14.63-8.32 21.18-6.69 7.81-14.79 12.31-23.59 11.6-.13-.93-.2-1.91-.2-2.94 0-7.26 3.17-15.03 8.81-21.38 2.82-3.22 6.41-5.89 10.76-8.02 4.35-2.12 8.47-3.3 12.36-3.53.12 1.05.18 2.08.18 3.09z"/>
+            </svg>
 
-    const DEFAULT_GRAVITATION_SETTINGS = {
-      enabled: true,
-      shakeActivation: true,
-      deviceTilt: true,
-      iconRotation: true,
-      dockGravity: false,
-      gravityStrength: 1.0,
-      bounciness: 0.55,
-      friction: 0.96,
-      animationSpeed: 1.0
+            <!-- Pixelated Chess Rook & King Overlay (checkra1n boot style) -->
+            <div id="boot-chess-overlay" class="absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-300">
+              <svg width="78" height="78" viewBox="0 0 24 24" fill="#000" shape-rendering="crispEdges" class="translate-y-2 drop-shadow-[0_0_2px_rgba(255,255,255,0.65)]">
+                <!-- Pixelated Rook (Left) -->
+                <path d="M3 5h2v2h2V5h2v2h2V5h2v4h-2v6h2v4H3v-4h2V9H3V5z"/>
+                <!-- Pixelated King (Right) -->
+                <path d="M16 2h2v2h2v2h-2v2h2v3h-1v4h2v4h-8v-4h2v-4h-1V8h2V6h-2V4h2V2z"/>
+              </svg>
+            </div>
+          </div>
+
+          <!-- iOS Respring Activity Spinner -->
+          <div id="respring-spinner" class="hidden flex-col items-center gap-4">
+            <div class="ios-spinner" id="spinner-spokes"></div>
+          </div>
+        </div>
+
+        <!-- BOTTOM HOME INDICATOR & SWIPE GESTURE CAPTURE -->
+        <div id="gesture-zone" title="Смахните вверх">
+          <div class="home-indicator" id="home-indicator"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /*****************************************************************
+     * STATE & CONFIGURATION
+     *****************************************************************/
+    const state = {
+      isLocked: true,
+      activeApp: null,         // ID of currently open app, or null
+      isJailbroken: false,     // Unlocked after voidra1n terminal command '1'
+      isAmethystInstalled: false, // Unlocked after Ra1nLoader install
+      isBooting: false,        // Blocks gestures during boot/respring
+      flashlightOn: false,
+      musicPlaying: true,
+      amethystTab: 'home',     // 'home' | 'sources' | 'packages' | 'search'
+      amethystSearch: '',
+      installedTweaks: new Set(['cylinder', 'snowboard']),
+      notes: [
+        { id: 1, title: 'Список дел', date: 'Сегодня, 14:20', text: '1. Проверить работу voidra1n\n2. Установить Ra1nLoader\n3. Скачать твики в Аметисте' },
+        { id: 2, title: 'Заметки по iOS 17', date: 'Вчера', text: 'Плавная анимация свайпов от нижней полоски работает через cubic-bezier(0.22, 1, 0.36, 1).' }
+      ],
+      selectedNoteId: 1
     };
 
-    /* Custom Tweak Icon Helper (with original Gravitation SVG artwork) */
-    function TweakBadgeIcon({ tweak, sizeClass = 'w-10 h-10 rounded-xl text-[15px]' }) {
-      if (tweak.id === 'gravitation') {
-        return (
-          <div className={`${sizeClass} bg-gradient-to-br from-[#2e1065] via-[#6d28d9] to-[#db2777] border border-white/20 shadow-lg flex items-center justify-center shrink-0 overflow-hidden`}>
-            <svg viewBox="0 0 64 64" className="w-full h-full p-1">
-              <circle cx="32" cy="32" r="24" fill="none" stroke="rgba(255,255,255,0.22)" strokeWidth="2" strokeDasharray="4 4" />
-              <rect x="13" y="13" width="13" height="13" rx="3.5" fill="#38bdf8" transform="rotate(-18 19.5 19.5)" />
-              <rect x="36" y="16" width="13" height="13" rx="3.5" fill="#fb7185" transform="rotate(24 42.5 22.5)" />
-              <rect x="23" y="37" width="14" height="14" rx="4" fill="#facc15" transform="rotate(14 30 44)" />
-              <path d="M32 23 L32 33 M28.5 29.5 L32 33.5 L35.5 29.5" stroke="#ffffff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-            </svg>
-          </div>
-        );
-      }
-      return (
-        <div className={`${sizeClass} ${tweak.iconBg} flex items-center justify-center font-bold text-white shrink-0`}>
-          {tweak.name[0]}
-        </div>
-      );
-    }
+    const TWEAKS_DATA = [
+      { id: 'cylinder', name: 'Cylinder Reborn', author: 'ryannair05', version: '1.1.2', desc: 'Плавные 3D-анимации перелистывания страниц рабочего стола.', cat: 'Оформление' },
+      { id: 'snowboard', name: 'SnowBoard', author: 'SparkDev', version: '1.5.24-Beta4', desc: 'Мощный движок тем и кастомных иконок для iOS.', cat: 'Темы' },
+      { id: 'atria', name: 'Atria', author: 'ren7995', version: '1.4.1', desc: 'Динамическая настройка сетки иконок и отступов прямо на экране.', cat: 'Рабочий стол' },
+      { id: 'lynx2', name: 'Lynx 2', author: 'MTAC', version: '2.4.8', desc: 'Более 300 скрытых настроек системы, статус-бара и экрана блокировки.', cat: 'Система' },
+      { id: 'ampere', name: 'Ampere', author: 'MTAC', version: '1.1.1', desc: 'Индикатор заряда батареи в стиле iOS 16+ с тонкой настройкой цветов.', cat: 'Статус-бар' },
+      { id: 'velvet2', name: 'Velvet 2', author: 'NoisyFlake', version: '2.1.2', desc: 'Кастомизация баннеров уведомлений и виджетов экрана блокировки.', cat: 'Уведомления' }
+    ];
 
-    /* =========================================================================
-       3. APP ICONS COMPONENT (Realistic iOS App Icons)
-    ========================================================================= */
-// ... existing code ... -->
-    /* =========================================================================
-       6. HOME SCREEN COMPONENT (Grid + Newly Installed PM Icons + Dock + Gravitation 2D Physics)
-    ========================================================================= */
-    function HomeScreen({
-      installedPMs,
-      newlyInstalledPMs,
-      installedTweaksCount,
-      isJailbroken,
-      isGravitationInstalled,
-      gravitationSettings,
-      gravitationActive,
-      setGravitationActive,
-      onOpenApp,
-      onOpenControlCenter,
-      onLockScreen,
-      addNotification
-    }) {
-      const baseApps = [
-        'endorphin',
-        'settings',
-        'photos',
-        'camera',
-        'appstore',
-        'clock',
-        'files'
+    const SOURCES_DATA = [
+      { name: 'Аметист Official Repo', url: 'https://repo.amethyst-jb.ru/', count: 142 },
+      { name: 'Chariz', url: 'https://repo.chariz.com/', count: 418 },
+      { name: 'Havoc', url: 'https://havoc.app/', count: 690 },
+      { name: 'SparkDev', url: 'https://sparkdev.me/', count: 64 }
+    ];
+
+    /*****************************************************************
+     * APP REGISTRY (Icons & Metadata)
+     *****************************************************************/
+    function getAppsList() {
+      const homeApps = [
+        {
+          id: 'settings',
+          name: 'Настройки',
+          iconHtml: `
+            <div class="w-full h-full bg-gradient-to-b from-[#8e8e93] to-[#636366] flex items-center justify-center">
+              <svg class="w-9 h-9 text-white/95" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <circle cx="12" cy="12" r="3.2"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              </svg>
+            </div>`
+        },
+        {
+          id: 'appstore',
+          name: 'App Store',
+          iconHtml: `
+            <div class="w-full h-full bg-gradient-to-b from-[#1ea7fd] to-[#0066eb] flex items-center justify-center">
+              <svg class="w-9 h-9 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+                <path d="M12 4L5.5 16.5"/>
+                <path d="M12 4l6.5 12.5"/>
+                <path d="M4.5 13.5h15"/>
+              </svg>
+            </div>`
+        },
+        {
+          id: 'notes',
+          name: 'Заметки',
+          iconHtml: `
+            <div class="w-full h-full bg-white flex flex-col">
+              <div class="h-4 w-full bg-gradient-to-b from-[#ffd60a] to-[#f5c200] border-b border-amber-400/50"></div>
+              <div class="flex-1 flex flex-col justify-evenly px-2.5 py-1.5">
+                <div class="h-[2px] w-full bg-zinc-200 rounded"></div>
+                <div class="h-[2px] w-4/5 bg-zinc-200 rounded"></div>
+                <div class="h-[2px] w-full bg-zinc-200 rounded"></div>
+              </div>
+            </div>`
+        },
+        {
+          id: 'voidra1n',
+          name: 'voidra1n',
+          iconHtml: `
+            <div class="w-full h-full bg-[#09090b] relative flex items-center justify-center border border-white/15">
+              <!-- Default Built-in SVG/CSS Icon -->
+              <div class="w-full h-full flex items-center justify-center bg-[radial-gradient(circle_at_center,#27272a_0%,#09090b_80%)]">
+                <svg class="w-9 h-9 text-white drop-shadow-[0_0_8px_rgba(74,222,128,0.65)]" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M5 4h2v2h2V4h2v2h2V4h2v2h2V4h2v4l-2 2v6l2 2v2H5v-2l2-2v-6L5 8V4zm4 6v6h6v-6H9z"/>
+                </svg>
+              </div>
+              <!-- External Custom Image Override (./jb-icon.png) -->
+              <img src="./jb-icon.png" alt="voidra1n" class="absolute inset-0 w-full h-full object-cover z-10" onerror="this.style.display='none'" />
+            </div>`
+        }
       ];
 
-      // Combine base apps + dynamically installed package managers (Sileo, Zebra, Cydia, Installer)
-      const gridApps = useMemo(() => [...baseApps, ...installedPMs], [installedPMs]);
-      const dockApps = useMemo(() => ['phone', 'safari', 'messages', 'music'], []);
-
-      const containerRef = useRef(null);
-      const dockRef = useRef(null);
-      const iconRefs = useRef({});
-      const bodiesRef = useRef({});
-      const rafRef = useRef(null);
-      const tiltRef = useRef({ gx: 0, gy: 1, hasSensor: false });
-      const dragRef = useRef({ id: null, offsetX: 0, offsetY: 0, lastX: 0, lastY: 0, vx: 0, vy: 0, lastTime: 0 });
-      const lastShakeTimeRef = useRef(0);
-      const gestureShakeRef = useRef({ lastX: 0, lastDir: 0, reversals: 0, windowStart: 0 });
-      const [isReturning, setIsReturning] = useState(false);
-
-      const canUseGravitation = isGravitationInstalled && gravitationSettings.enabled;
-
-      // Trigger shake toggle (First shake = activate physics, Second shake = smoothly restore)
-      const triggerShakeToggle = useCallback(async () => {
-        if (!canUseGravitation) return;
-        const nowTs = Date.now();
-        if (nowTs - lastShakeTimeRef.current < 450) return;
-        lastShakeTimeRef.current = nowTs;
-
-        // Request iOS 13+ Motion/Orientation sensor permission on user gesture if available
-        try {
-          if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
-            await DeviceMotionEvent.requestPermission().catch(() => {});
-          }
-          if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-            await DeviceOrientationEvent.requestPermission().catch(() => {});
-          }
-        } catch (e) {}
-
-        setGravitationActive((prev) => !prev);
-      }, [canUseGravitation, setGravitationActive]);
-
-      // Real DeviceMotionEvent Shake Detection
-      useEffect(() => {
-        if (!canUseGravitation || !gravitationSettings.shakeActivation) return;
-        const handleMotion = (e) => {
-          const acc = e.accelerationIncludingGravity || e.acceleration;
-          if (!acc) return;
-          const total = Math.sqrt((acc.x || 0) ** 2 + (acc.y || 0) ** 2 + (acc.z || 0) ** 2);
-          if (total > 23.5) {
-            triggerShakeToggle();
-          }
-        };
-        window.addEventListener('devicemotion', handleMotion);
-        return () => window.removeEventListener('devicemotion', handleMotion);
-      }, [canUseGravitation, gravitationSettings.shakeActivation, triggerShakeToggle]);
-
-      // Real DeviceOrientationEvent Tilt Gravity Vector
-      useEffect(() => {
-        if (!canUseGravitation || !gravitationSettings.deviceTilt) {
-          tiltRef.current = { gx: 0, gy: 1, hasSensor: false };
-          return;
-        }
-        const handleOrientation = (e) => {
-          if (e.gamma === null || e.beta === null) return;
-          const gx = Math.max(-1, Math.min(1, e.gamma / 45));
-          const gy = Math.max(-1, Math.min(1, e.beta / 45));
-          const mag = Math.hypot(gx, gy) || 1;
-          tiltRef.current = {
-            gx: gx / Math.max(1, mag),
-            gy: (Math.abs(gy) < 0.08 && Math.abs(gx) < 0.08) ? 1 : gy / Math.max(1, mag),
-            hasSensor: true
-          };
-        };
-        window.addEventListener('deviceorientation', handleOrientation);
-        return () => window.removeEventListener('deviceorientation', handleOrientation);
-      }, [canUseGravitation, gravitationSettings.deviceTilt]);
-
-      // 2D Rigid-Body Physics Loop (requestAnimationFrame)
-      useEffect(() => {
-        const containerEl = containerRef.current;
-        if (!containerEl) return;
-
-        const activeAppIds = gravitationSettings.dockGravity
-          ? [...gridApps, ...dockApps]
-          : [...gridApps];
-
-        if (!gravitationActive) {
-          if (rafRef.current) {
-            cancelAnimationFrame(rafRef.current);
-            rafRef.current = null;
-          }
-          // Smoothly animate icons back to their exact original positions
-          if (Object.keys(bodiesRef.current).length > 0) {
-            setIsReturning(true);
-            Object.keys(iconRefs.current).forEach((id) => {
-              const el = iconRefs.current[id];
-              if (el) {
-                el.style.transition = 'transform 0.55s cubic-bezier(0.22, 1, 0.36, 1)';
-                el.style.transform = 'translate3d(0px, 0px, 0px) rotate(0deg)';
-                el.style.zIndex = '';
-              }
-            });
-            bodiesRef.current = {};
-            const t = setTimeout(() => {
-              Object.keys(iconRefs.current).forEach((id) => {
-                const el = iconRefs.current[id];
-                if (el) {
-                  el.style.transition = '';
-                  el.style.transform = '';
-                }
-              });
-              setIsReturning(false);
-            }, 580);
-            return () => clearTimeout(t);
-          }
-          return;
-        }
-
-        // Initialize independent 2D physics bodies from current DOM coordinates
-        const cRect = containerEl.getBoundingClientRect();
-        const dockRect = dockRef.current ? dockRef.current.getBoundingClientRect() : null;
-        const floorY = (!gravitationSettings.dockGravity && dockRect)
-          ? (dockRect.top - cRect.top - 8)
-          : (cRect.height - 6);
-
-        const bodies = {};
-        activeAppIds.forEach((id) => {
-          const el = iconRefs.current[id];
-          if (!el) return;
-          el.style.transition = 'none';
-          el.style.transform = 'translate3d(0px, 0px, 0px) rotate(0deg)';
-          const r = el.getBoundingClientRect();
-          const originX = r.left - cRect.left;
-          const originY = r.top - cRect.top;
-          bodies[id] = {
-            id,
-            originX,
-            originY,
-            x: originX,
-            y: originY,
-            w: r.width,
-            h: r.height,
-            radius: Math.min(r.width, r.height) * 0.46,
-            vx: (Math.random() - 0.5) * 180,
-            vy: (Math.random() - 0.3) * 80,
-            angle: 0,
-            angularVelocity: (Math.random() - 0.5) * 240
-          };
+      if (state.isJailbroken) {
+        homeApps.push({
+          id: 'loader',
+          name: 'Ra1nLoader',
+          isNew: true,
+          iconHtml: `
+            <div class="w-full h-full bg-gradient-to-br from-[#18181b] via-[#27272a] to-[#09090b] flex items-center justify-center border border-white/15">
+              <svg class="w-8 h-8 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 3v12"/>
+                <path d="m8 11 4 4 4-4"/>
+                <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>
+              </svg>
+            </div>`
         });
-        bodiesRef.current = bodies;
+      }
 
-        let lastTime = performance.now();
+      if (state.isAmethystInstalled) {
+        homeApps.push({
+          id: 'amethyst',
+          name: 'Аметист',
+          isNew: true,
+          iconHtml: `
+            <div class="w-full h-full bg-gradient-to-br from-[#2e1065] via-[#581c87] to-[#1e1b4b] flex items-center justify-center border border-purple-400/30">
+              <svg class="w-9 h-9 drop-shadow-[0_0_10px_rgba(192,132,252,0.85)]" viewBox="0 0 24 24" fill="none">
+                <polygon points="12,2 20,8 17,21 7,21 4,8" fill="url(#amethystGrad)" stroke="#e9d5ff" stroke-width="1.3"/>
+                <polyline points="4,8 12,11 20,8" stroke="#f3e8ff" stroke-width="1.1" opacity="0.8"/>
+                <line x1="12" y1="2" x2="12" y2="21" stroke="#f3e8ff" stroke-width="1" opacity="0.55"/>
+                <defs>
+                  <linearGradient id="amethystGrad" x1="4" y1="2" x2="20" y2="21" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#c084fc"/>
+                    <stop offset="0.5" stop-color="#9333ea"/>
+                    <stop offset="1" stop-color="#4c1d95"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>`
+        });
+      }
 
-        const step = (now) => {
-          const rawDt = Math.min(0.032, (now - lastTime) / 1000);
-          lastTime = now;
-          const dt = rawDt * gravitationSettings.animationSpeed;
-
-          const containerW = containerEl.clientWidth;
-          const bounciness = gravitationSettings.bounciness;
-          const friction = gravitationSettings.friction;
-          const gMag = 1450 * gravitationSettings.gravityStrength;
-          const gx = gravitationSettings.deviceTilt && tiltRef.current.hasSensor ? tiltRef.current.gx * gMag : 0;
-          const gy = gravitationSettings.deviceTilt && tiltRef.current.hasSensor ? tiltRef.current.gy * gMag : gMag;
-          const list = Object.values(bodiesRef.current);
-
-          // 1. Integrate forces & velocities
-          for (let i = 0; i < list.length; i++) {
-            const b = list[i];
-            if (dragRef.current.id === b.id) continue;
-
-            b.vx += gx * dt;
-            b.vy += gy * dt;
-
-            // Air damping
-            const airDrag = Math.pow(friction, dt * 60 * 0.25);
-            b.vx *= airDrag;
-            b.vy *= airDrag;
-
-            b.x += b.vx * dt;
-            b.y += b.vy * dt;
-
-            if (gravitationSettings.iconRotation) {
-              b.angle += b.angularVelocity * dt;
-              b.angularVelocity *= Math.pow(friction, dt * 60 * 0.35);
-            } else {
-              b.angle = 0;
-              b.angularVelocity = 0;
-            }
-
-            // Boundary collisions (left, right, top, bottom/dock)
-            if (b.x < 4) {
-              b.x = 4;
-              b.vx = Math.abs(b.vx) * bounciness;
-              b.angularVelocity += b.vy * 0.15;
-            } else if (b.x + b.w > containerW - 4) {
-              b.x = containerW - 4 - b.w;
-              b.vx = -Math.abs(b.vx) * bounciness;
-              b.angularVelocity -= b.vy * 0.15;
-            }
-
-            if (b.y < 4) {
-              b.y = 4;
-              b.vy = Math.abs(b.vy) * bounciness;
-            } else if (b.y + b.h > floorY) {
-              b.y = floorY - b.h;
-              if (Math.abs(b.vy) > 45) {
-                b.vy = -Math.abs(b.vy) * bounciness;
-              } else {
-                b.vy = 0;
-              }
-              b.vx *= friction;
-              b.angularVelocity = gravitationSettings.iconRotation ? b.vx * 1.1 : 0;
-            }
-          }
-
-          // 2. Icon-to-icon elastic/inelastic collisions (2 solver passes for stability)
-          for (let pass = 0; pass < 2; pass++) {
-            for (let i = 0; i < list.length; i++) {
-              for (let j = i + 1; j < list.length; j++) {
-                const a = list[i];
-                const b = list[j];
-                const ax = a.x + a.w * 0.5;
-                const ay = a.y + a.h * 0.5;
-                const bx = b.x + b.w * 0.5;
-                const by = b.y + b.h * 0.5;
-
-                const dx = bx - ax;
-                const dy = by - ay;
-                const dist = Math.hypot(dx, dy) || 0.001;
-                const minDist = (a.radius + b.radius) * 0.96;
-
-                if (dist < minDist) {
-                  const nx = dx / dist;
-                  const ny = dy / dist;
-                  const overlap = minDist - dist;
-
-                  const aDragged = dragRef.current.id === a.id;
-                  const bDragged = dragRef.current.id === b.id;
-
-                  if (aDragged) {
-                    b.x += nx * overlap;
-                    b.y += ny * overlap;
-                  } else if (bDragged) {
-                    a.x -= nx * overlap;
-                    a.y -= ny * overlap;
-                  } else {
-                    a.x -= nx * overlap * 0.5;
-                    a.y -= ny * overlap * 0.5;
-                    b.x += nx * overlap * 0.5;
-                    b.y += ny * overlap * 0.5;
-                  }
-
-                  const rvx = b.vx - a.vx;
-                  const rvy = b.vy - a.vy;
-                  const velAlongNormal = rvx * nx + rvy * ny;
-
-                  if (velAlongNormal < 0) {
-                    const impulse = -(1 + bounciness) * velAlongNormal * 0.5;
-                    if (!aDragged) {
-                      a.vx -= impulse * nx;
-                      a.vy -= impulse * ny;
-                      if (gravitationSettings.iconRotation) a.angularVelocity -= (rvx * ny - rvy * nx) * 0.45;
-                    }
-                    if (!bDragged) {
-                      b.vx += impulse * nx;
-                      b.vy += impulse * ny;
-                      if (gravitationSettings.iconRotation) b.angularVelocity += (rvx * ny - rvy * nx) * 0.45;
-                    }
-                  }
-                }
-              }
-            }
-          }
-
-          // 3. Apply transforms directly to DOM for 60fps performance
-          for (let i = 0; i < list.length; i++) {
-            const b = list[i];
-            const el = iconRefs.current[b.id];
-            if (el) {
-              const tx = b.x - b.originX;
-              const ty = b.y - b.originY;
-              el.style.transform = `translate3d(${tx.toFixed(1)}px, ${ty.toFixed(1)}px, 0px) rotate(${b.angle.toFixed(1)}deg)`;
-              el.style.zIndex = dragRef.current.id === b.id ? '25' : '15';
-            }
-          }
-
-          rafRef.current = requestAnimationFrame(step);
-        };
-
-        rafRef.current = requestAnimationFrame(step);
-        return () => {
-          if (rafRef.current) cancelAnimationFrame(rafRef.current);
-        };
-      }, [
-        gravitationActive,
-        gridApps,
-        dockApps,
-        gravitationSettings.dockGravity,
-        gravitationSettings.gravityStrength,
-        gravitationSettings.bounciness,
-        gravitationSettings.friction,
-        gravitationSettings.animationSpeed,
-        gravitationSettings.iconRotation,
-        gravitationSettings.deviceTilt
-      ]);
-
-      // Drag & Throw handlers for fallen icons
-      const handleIconPointerDown = (e, appId) => {
-        if (!gravitationActive) return;
-        const body = bodiesRef.current[appId];
-        const containerEl = containerRef.current;
-        if (!body || !containerEl) return;
-        e.stopPropagation();
-
-        const cRect = containerEl.getBoundingClientRect();
-        const px = (e.touches ? e.touches[0].clientX : e.clientX) - cRect.left;
-        const py = (e.touches ? e.touches[0].clientY : e.clientY) - cRect.top;
-
-        dragRef.current = {
-          id: appId,
-          offsetX: px - body.x,
-          offsetY: py - body.y,
-          lastX: px,
-          lastY: py,
-          vx: 0,
-          vy: 0,
-          lastTime: performance.now()
-        };
-      };
-
-      const handleContainerPointerMove = (e) => {
-        const containerEl = containerRef.current;
-        if (!containerEl) return;
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-
-        // 1. If dragging a fallen icon
-        if (gravitationActive && dragRef.current.id) {
-          const body = bodiesRef.current[dragRef.current.id];
-          if (!body) return;
-          const cRect = containerEl.getBoundingClientRect();
-          const px = clientX - cRect.left;
-          const py = clientY - cRect.top;
-          const now = performance.now();
-          const dt = Math.max(0.008, (now - dragRef.current.lastTime) / 1000);
-
-          const vx = (px - dragRef.current.lastX) / dt;
-          const vy = (py - dragRef.current.lastY) / dt;
-
-          body.x = px - dragRef.current.offsetX;
-          body.y = py - dragRef.current.offsetY;
-          body.vx = Math.max(-1800, Math.min(1800, vx));
-          body.vy = Math.max(-1800, Math.min(1800, vy));
-
-          dragRef.current.lastX = px;
-          dragRef.current.lastY = py;
-          dragRef.current.vx = body.vx;
-          dragRef.current.vy = body.vy;
-          dragRef.current.lastTime = now;
-          return;
-        }
-
-        // 2. Horizontal shake gesture on empty Home Screen space
-        if (canUseGravitation && gravitationSettings.shakeActivation && (e.touches || e.buttons === 1)) {
-          const g = gestureShakeRef.current;
-          const dx = clientX - g.lastX;
-          if (Math.abs(dx) > 22) {
-            const dir = dx > 0 ? 1 : -1;
-            const now = Date.now();
-            if (now - g.windowStart > 650) {
-              g.reversals = 0;
-              g.windowStart = now;
-            }
-            if (g.lastDir !== 0 && dir !== g.lastDir) {
-              g.reversals += 1;
-              if (g.reversals >= 3) {
-                g.reversals = 0;
-                triggerShakeToggle();
-              }
-            }
-            g.lastDir = dir;
-            g.lastX = clientX;
-          }
-        }
-      };
-
-      const handleContainerPointerUp = () => {
-        if (dragRef.current.id) {
-          const body = bodiesRef.current[dragRef.current.id];
-          if (body) {
-            body.vx = dragRef.current.vx * 0.75;
-            body.vy = dragRef.current.vy * 0.75;
-          }
-          dragRef.current.id = null;
-        }
-      };
-
-      return (
-        <div
-          ref={containerRef}
-          onTouchMove={handleContainerPointerMove}
-          onTouchEnd={handleContainerPointerUp}
-          onMouseMove={handleContainerPointerMove}
-          onMouseUp={handleContainerPointerUp}
-          onMouseLeave={handleContainerPointerUp}
-          className="relative flex-1 flex flex-col justify-between px-5 pt-3 pb-3 select-none overflow-hidden"
-        >
-          {/* App Icons Grid */}
-          <div className="grid grid-cols-4 gap-x-3.5 gap-y-4 pt-1">
-            {gridApps.map((appId) => {
-              const app = APP_REGISTRY[appId];
-              if (!app) return null;
-              const isNew = newlyInstalledPMs.includes(appId);
-
-              return (
-                <button
-                  key={appId}
-                  ref={(el) => { iconRefs.current[appId] = el; }}
-                  onMouseDown={(e) => handleIconPointerDown(e, appId)}
-                  onTouchStart={(e) => handleIconPointerDown(e, appId)}
-                  onClick={() => {
-                    if (!gravitationActive && !isReturning) onOpenApp(appId);
-                  }}
-                  className={`flex flex-col items-center gap-1.5 group will-change-transform ${
-                    gravitationActive ? 'cursor-grab active:cursor-grabbing' : 'active:scale-90 transition-transform'
-                  } ${isNew && !gravitationActive ? 'animate-icon-install' : ''}`}
-                >
-                  <div className="relative pointer-events-none">
-                    <AppIconArtwork appId={appId} size="md" />
-                    {appId === 'endorphin' && isJailbroken && (
-                      <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-zinc-900 flex items-center justify-center text-[9px] font-bold text-white">
-                        ✓
-                      </span>
-                    )}
-                    {isNew && (
-                      <span className="absolute -top-1.5 -right-1.5 px-1.5 py-0.2 rounded-full bg-sky-500 text-[9px] font-bold text-white shadow">
-                        NEW
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-[11.5px] font-medium text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)] truncate max-w-[72px] pointer-events-none">
-                    {app.name}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Subtle iOS Status Widget Pill + Gravitation Shake Control */}
-          <div className="my-auto pt-3 space-y-2 relative z-0">
-            <div className="bg-black/30 backdrop-blur-xl border border-white/15 rounded-[22px] p-3.5 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className={`w-2.5 h-2.5 rounded-full ${isJailbroken ? 'bg-emerald-400 shadow-[0_0_10px_#34d399]' : 'bg-amber-400'}`} />
-                <div>
-                  <div className="text-[13px] font-semibold text-white">
-                    {isJailbroken ? 'Endorphin 2.1.4 Active' : 'iOS 26.2 • Stock Mode'}
-                  </div>
-                  <div className="text-[11px] text-white/60">
-                    {isJailbroken
-                      ? `Менеджеров: ${installedPMs.length} • Твиков: ${installedTweaksCount}`
-                      : 'Откройте Endorphin для симуляции'}
-                  </div>
-                </div>
+      const dockApps = [
+        {
+          id: 'safari',
+          name: 'Safari',
+          iconHtml: `
+            <div class="w-full h-full bg-white flex items-center justify-center p-1">
+              <div class="w-full h-full rounded-full bg-gradient-to-b from-[#38bdf8] to-[#0284c7] flex items-center justify-center relative">
+                <svg class="w-9 h-9" viewBox="0 0 24 24">
+                  <polygon points="16.5,7.5 13.5,13.5 7.5,16.5 10.5,10.5" fill="#ef4444"/>
+                  <polygon points="13.5,13.5 7.5,16.5 10.5,10.5" fill="#ffffff"/>
+                </svg>
               </div>
-              <div className="flex items-center gap-1.5">
-                {canUseGravitation && (
-                  <button
-                    onClick={triggerShakeToggle}
-                    className={`px-2.5 py-1.5 rounded-xl text-[11px] font-semibold active:scale-95 transition-all flex items-center gap-1 ${
-                      gravitationActive
-                        ? 'bg-fuchsia-500 text-white shadow-lg shadow-fuchsia-500/40'
-                        : 'bg-white/20 text-white border border-white/15'
-                    }`}
-                    title="Встряхнуть iPhone (Gravitation)"
-                  >
-                    <span>{gravitationActive ? '↺ Reset' : '📳 Shake'}</span>
-                  </button>
-                )}
-                <button
-                  onClick={onOpenControlCenter}
-                  className="px-2.5 py-1.5 rounded-xl bg-white/15 text-[11px] font-medium text-white active:scale-95"
-                  title="Пункт управления"
-                >
-                  Пункт
-                </button>
-                <button
-                  onClick={onLockScreen}
-                  className="p-1.5 rounded-xl bg-white/15 text-white active:scale-95"
-                  title="Заблокировать экран"
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                  </svg>
-                </button>
+            </div>`
+        },
+        {
+          id: 'music',
+          name: 'Музыка',
+          iconHtml: `
+            <div class="w-full h-full bg-gradient-to-b from-[#fb5c74] to-[#fa233b] flex items-center justify-center">
+              <svg class="w-8 h-8 text-white" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M9 18V6l11-2v12"/>
+                <circle cx="6.5" cy="18" r="2.8"/>
+                <circle cx="17.5" cy="16" r="2.8"/>
+              </svg>
+            </div>`
+        },
+        {
+          id: 'notes',
+          name: 'Заметки',
+          iconHtml: `
+            <div class="w-full h-full bg-white flex flex-col">
+              <div class="h-4 w-full bg-gradient-to-b from-[#ffd60a] to-[#f5c200]"></div>
+              <div class="flex-1 flex flex-col justify-evenly px-2.5 py-1.5">
+                <div class="h-[2px] w-full bg-zinc-200"></div>
+                <div class="h-[2px] w-3/4 bg-zinc-200"></div>
               </div>
-            </div>
-          </div>
+            </div>`
+        },
+        {
+          id: 'settings',
+          name: 'Настройки',
+          iconHtml: `
+            <div class="w-full h-full bg-gradient-to-b from-[#8e8e93] to-[#636366] flex items-center justify-center">
+              <svg class="w-8 h-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M12 2v3m0 14v3M4.93 4.93l2.12 2.12m9.9 9.9l2.12 2.12M2 12h3m14 0h3M4.93 19.07l2.12-2.12m9.9-9.9l2.12-2.12"/>
+              </svg>
+            </div>`
+        }
+      ];
 
-          {/* Page Dots */}
-          <div className="flex items-center justify-center gap-1.5 mb-2.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-white" />
-            <span className="w-1.5 h-1.5 rounded-full bg-white/35" />
-          </div>
-
-          {/* iOS Frosted Dock */}
-          <div ref={dockRef} className="ios-dock rounded-[28px] p-3 grid grid-cols-4 gap-3 mb-2">
-            {dockApps.map((appId) => (
-              <button
-                key={appId}
-                ref={(el) => { iconRefs.current[appId] = el; }}
-                onMouseDown={(e) => {
-                  if (gravitationSettings.dockGravity) handleIconPointerDown(e, appId);
-                }}
-                onTouchStart={(e) => {
-                  if (gravitationSettings.dockGravity) handleIconPointerDown(e, appId);
-                }}
-                onClick={() => {
-                  if (!(gravitationActive && gravitationSettings.dockGravity) && !isReturning) {
-                    onOpenApp(appId);
-                  }
-                }}
-                className={`flex flex-col items-center will-change-transform ${
-                  gravitationActive && gravitationSettings.dockGravity
-                    ? 'cursor-grab active:cursor-grabbing'
-                    : 'active:scale-90 transition-transform'
-                }`}
-              >
-                <div className="pointer-events-none">
-                  <AppIconArtwork appId={appId} size="md" />
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-      );
+      return { homeApps, dockApps };
     }
 
-    /* =========================================================================
-       7. ENDORPHIN 2.1.4 APP (FAKE JAILBREAK UTILITY)
-// ... existing code ... -->
-                    {TWEAKS_CATALOG.slice(3, 7).map((tweak) => (
-                      <div
-                        key={tweak.id}
-                        onClick={() => setSelectedTweak(tweak)}
-                        className="p-3 flex items-center justify-between gap-3 cursor-pointer active:bg-white/5"
-                      >
-                        <TweakBadgeIcon tweak={tweak} sizeClass="w-10 h-10 rounded-xl text-[15px]" />
-                        <div className="flex-1 min-w-0">
-                          <div className="text-[14px] font-semibold truncate">{tweak.name}</div>
-                          <div className="text-[11.5px] text-white/55 truncate">{tweak.shortDesc}</div>
-                        </div>
-                        <span className={`text-[12px] font-semibold ${storeTheme.accentText}`}>
-                          {installedTweaks.includes(tweak.id) ? 'Installed' : 'Get'}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
+    /*****************************************************************
+     * RENDER HOME SCREEN & DOCK
+     *****************************************************************/
+    function renderHomeScreen(animateNew = false) {
+      const grid = document.getElementById('home-grid');
+      const dock = document.getElementById('home-dock');
+      const { homeApps, dockApps } = getAppsList();
+
+      grid.innerHTML = homeApps.map(app => `
+        <div class="app-item ${animateNew && app.isNew ? 'newly-installed' : ''}" data-app-id="${app.id}">
+          <div class="app-icon-box" id="icon-${app.id}">
+            ${app.iconHtml}
+          </div>
+          <span class="app-label">${app.name}</span>
+        </div>
+      `).join('');
+
+      dock.innerHTML = dockApps.map(app => `
+        <div class="app-item" data-app-id="${app.id}">
+          <div class="app-icon-box">
+            ${app.iconHtml}
+          </div>
+        </div>
+      `).join('');
+
+      // Attach click handlers
+      document.querySelectorAll('.app-item').forEach(el => {
+        el.addEventListener('click', () => {
+          const appId = el.getAttribute('data-app-id');
+          openApp(appId, el.querySelector('.app-icon-box'));
+        });
+      });
+    }
+
+    /*****************************************************************
+     * LIVE CLOCK & STATUS BAR
+     *****************************************************************/
+    function updateClock() {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const mins = String(now.getMinutes()).padStart(2, '0');
+      const timeStr = `${hours}:${mins}`;
+
+      document.getElementById('sb-time').textContent = timeStr;
+      document.getElementById('ls-time').textContent = timeStr;
+
+      const days = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
+      const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+      const dateStr = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]}`;
+      document.getElementById('ls-date').textContent = dateStr;
+    }
+
+    /*****************************************************************
+     * OPEN / CLOSE APPS WITH SPRING ANIMATION
+     *****************************************************************/
+    function openApp(appId, iconEl) {
+      if (state.isLocked || state.isBooting) return;
+      state.activeApp = appId;
+
+      const appWindow = document.getElementById('app-window');
+      const appContent = document.getElementById('app-content');
+      const homeScreen = document.getElementById('home-screen');
+
+      // Render interior UI
+      appContent.innerHTML = buildAppUI(appId);
+      bindAppEvents(appId);
+
+      // Calculate icon origin for zoom-in spring effect
+      const screenRect = document.getElementById('iphone-screen').getBoundingClientRect();
+      let originX = '50%';
+      let originY = '50%';
+      if (iconEl) {
+        const iconRect = iconEl.getBoundingClientRect();
+        const relX = ((iconRect.left + iconRect.width / 2 - screenRect.left) / screenRect.width) * 100;
+        const relY = ((iconRect.top + iconRect.height / 2 - screenRect.top) / screenRect.height) * 100;
+        originX = `${relX}%`;
+        originY = `${relY}%`;
+      }
+
+      appWindow.classList.remove('spring-anim');
+      appWindow.style.transformOrigin = `${originX} ${originY}`;
+      appWindow.style.transform = 'scale(0.18)';
+      appWindow.style.borderRadius = '80px';
+      appWindow.style.opacity = '0';
+
+      // Force reflow
+      void appWindow.offsetWidth;
+
+      appWindow.classList.add('spring-anim', 'open');
+      appWindow.style.transform = 'scale(1) translateY(0px)';
+      appWindow.style.borderRadius = '45px';
+      appWindow.style.opacity = '1';
+
+      homeScreen.style.transform = 'scale(0.92)';
+      homeScreen.style.opacity = '0.5';
+
+      // Auto-focus terminal input if voidra1n
+      if (appId === 'voidra1n') {
+        setTimeout(() => {
+          const inp = document.getElementById('jb-cmd-input');
+          if (inp) inp.focus();
+        }, 120);
+      }
+    }
+
+    function closeActiveApp(isCrash = false) {
+      if (!state.activeApp) return;
+      const closingId = state.activeApp;
+      state.activeApp = null;
+
+      const appWindow = document.getElementById('app-window');
+      const homeScreen = document.getElementById('home-screen');
+      const iconEl = document.getElementById(`icon-${closingId}`);
+
+      if (iconEl) {
+        const screenRect = document.getElementById('iphone-screen').getBoundingClientRect();
+        const iconRect = iconEl.getBoundingClientRect();
+        const relX = ((iconRect.left + iconRect.width / 2 - screenRect.left) / screenRect.width) * 100;
+        const relY = ((iconRect.top + iconRect.height / 2 - screenRect.top) / screenRect.height) * 100;
+        appWindow.style.transformOrigin = `${relX}% ${relY}%`;
+      } else {
+        appWindow.style.transformOrigin = '50% 85%';
+      }
+
+      appWindow.classList.add('spring-anim');
+      appWindow.style.transform = isCrash ? 'scale(0.05)' : 'scale(0.16)';
+      appWindow.style.borderRadius = '90px';
+      appWindow.style.opacity = '0';
+
+      homeScreen.style.transform = 'scale(1)';
+      homeScreen.style.opacity = '1';
+
+      setTimeout(() => {
+        appWindow.classList.remove('open', 'spring-anim', 'crashed');
+        document.getElementById('app-content').innerHTML = '';
+      }, isCrash ? 220 : 420);
+    }
+
+    /*****************************************************************
+     * SWIPE UP GESTURE ENGINE (MOUSE + TOUCH)
+     *****************************************************************/
+    function initSwipeGestures() {
+      const gestureZone = document.getElementById('gesture-zone');
+      const lockScreen = document.getElementById('lock-screen');
+      const homeScreen = document.getElementById('home-screen');
+      const appWindow = document.getElementById('app-window');
+
+      let isDragging = false;
+      let startY = 0;
+      let currentDeltaY = 0;
+
+      function getClientY(e) {
+        return e.touches ? e.touches[0].clientY : e.clientY;
+      }
+
+      function onStart(e) {
+        if (state.isBooting) return;
+        isDragging = true;
+        startY = getClientY(e);
+        currentDeltaY = 0;
+
+        if (state.isLocked) {
+          lockScreen.classList.remove('smooth-transition');
+        } else if (state.activeApp) {
+          appWindow.classList.remove('spring-anim');
+        }
+      }
+
+      function onMove(e) {
+        if (!isDragging) return;
+        const y = getClientY(e);
+        // Positive delta means dragging UPWARDS
+        currentDeltaY = Math.max(0, startY - y);
+
+        if (state.isLocked) {
+          const translateY = -currentDeltaY * 1.15;
+          const progress = Math.min(1, currentDeltaY / 260);
+          lockScreen.style.transform = `translateY(${translateY}px)`;
+          lockScreen.style.opacity = `${1 - progress * 0.65}`;
+          homeScreen.style.transform = `scale(${0.92 + progress * 0.08})`;
+          homeScreen.style.opacity = `${0.4 + progress * 0.6}`;
+        } else if (state.activeApp) {
+          const progress = Math.min(1, currentDeltaY / 320);
+          const scale = 1 - progress * 0.42;
+          const translateY = -currentDeltaY * 0.55;
+          const radius = 45 + progress * 35;
+
+          appWindow.style.transformOrigin = '50% 50%';
+          appWindow.style.transform = `translateY(${translateY}px) scale(${scale})`;
+          appWindow.style.borderRadius = `${radius}px`;
+
+          homeScreen.style.transform = `scale(${0.92 + progress * 0.08})`;
+          homeScreen.style.opacity = `${0.5 + progress * 0.5}`;
+        }
+      }
+
+      function onEnd() {
+        if (!isDragging) return;
+        isDragging = false;
+
+        const threshold = 75; // pixels upward to trigger action
+
+        if (state.isLocked) {
+          lockScreen.classList.add('smooth-transition');
+          if (currentDeltaY >= threshold) {
+            unlockPhone();
+          } else {
+            // Snap back down
+            lockScreen.style.transform = 'translateY(0)';
+            lockScreen.style.opacity = '1';
+            homeScreen.style.transform = 'scale(0.92)';
+            homeScreen.style.opacity = '0.4';
+          }
+        } else if (state.activeApp) {
+          if (currentDeltaY >= threshold) {
+            closeActiveApp(false);
+          } else {
+            // Snap app back to fullscreen
+            appWindow.classList.add('spring-anim');
+            appWindow.style.transform = 'translateY(0px) scale(1)';
+            appWindow.style.borderRadius = '45px';
+            homeScreen.style.transform = 'scale(0.92)';
+            homeScreen.style.opacity = '0.5';
+          }
+        }
+      }
+
+      // Mouse events
+      gestureZone.addEventListener('mousedown', onStart);
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onEnd);
+
+      // Touch events
+      gestureZone.addEventListener('touchstart', onStart, { passive: true });
+      window.addEventListener('touchmove', onMove, { passive: true });
+      window.addEventListener('touchend', onEnd);
+
+      // Also allow dragging anywhere on Lock Screen upward
+      lockScreen.addEventListener('mousedown', (e) => {
+        if (e.target.closest('button')) return;
+        onStart(e);
+      });
+      lockScreen.addEventListener('touchstart', (e) => {
+        if (e.target.closest('button')) return;
+        onStart(e);
+      }, { passive: true });
+    }
+
+    function unlockPhone() {
+      const lockScreen = document.getElementById('lock-screen');
+      const homeScreen = document.getElementById('home-screen');
+      state.isLocked = false;
+
+      lockScreen.classList.add('smooth-transition', 'unlocked');
+      lockScreen.style.transform = '';
+      lockScreen.style.opacity = '';
+
+      homeScreen.classList.remove('behind-lock');
+      homeScreen.style.transform = 'scale(1)';
+      homeScreen.style.opacity = '1';
+    }
+
+    function lockPhone() {
+      if (state.isBooting) return;
+      if (state.activeApp) closeActiveApp(false);
+      state.isLocked = true;
+
+      const lockScreen = document.getElementById('lock-screen');
+      const homeScreen = document.getElementById('home-screen');
+
+      lockScreen.classList.add('smooth-transition');
+      lockScreen.classList.remove('unlocked');
+      lockScreen.style.transform = 'translateY(0)';
+      lockScreen.style.opacity = '1';
+
+      homeScreen.classList.add('behind-lock');
+    }
+
+    /*****************************************************************
+     * APP TEMPLATES (Settings, App Store, Music, Safari, Notes, JB, Loader, Amethyst)
+     *****************************************************************/
+    function buildAppUI(appId) {
+      switch (appId) {
+        case 'voidra1n':
+          return `
+            <div id="jb-terminal-screen" class="w-full h-full bg-[#050507] text-[#e4e4e7] terminal-font pt-14 pb-10 px-4 flex flex-col overflow-hidden">
+              <div class="flex items-center justify-between border-b border-zinc-800 pb-2 mb-3 text-[11px] text-zinc-400">
+                <span>voidra1n-cli — tty0</span>
+                <span class="text-emerald-400">arm64e</span>
+              </div>
+
+              <div id="jb-output" class="flex-1 overflow-y-auto app-scroll text-[12px] leading-relaxed space-y-1.5">
+<pre class="text-[10.5px] leading-[1.15] text-emerald-400 font-bold select-none mb-2">
+      [ ]   [ ]   [ ]
+      | |___| |___| |
+      |             |
+       \\           /
+        |  #####  |
+        |  #   #  |
+        |  #####  |
+        |         |
+       /           \\
+      |_____________|
+     [_______________]
+</pre>
+                <div class="text-white font-semibold">voidra1n v1.4.2-rootless [iOS 17.0 — 17.6.1]</div>
+                <div class="text-zinc-400">[*] Kernel exploit: kfd / puaf_physpuppet ready</div>
+                <div class="text-zinc-400">[*] Bootstrap payload: ellekit + procursus</div>
+                <div class="text-rose-400 font-bold tracking-wide pt-0.5">made by fuckoff</div>
+                <div class="border-t border-zinc-800/80 my-2 pt-2 text-amber-300">
+                  <div>1. start</div>
                 </div>
-              </>
-            )}
-// ... existing code ... -->
-                    return (
-                      <div
-                        key={tweak.id}
-                        onClick={() => setSelectedTweak(tweak)}
-                        className="p-3.5 flex items-center justify-between gap-3 cursor-pointer active:bg-white/5"
-                      >
-                        <TweakBadgeIcon tweak={tweak} sizeClass="w-11 h-11 rounded-xl text-[16px]" />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-[14.5px] font-semibold truncate">{tweak.name}</span>
-                            <span className="text-[11px] font-mono-code text-white/45">{tweak.version}</span>
-                          </div>
-                          <div className="text-[12px] text-white/60 truncate">{tweak.shortDesc}</div>
-                        </div>
-                        {isInst && (
-                          <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 text-[10.5px] font-semibold">
-                            ✓
-                          </span>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* TAB 4: INSTALLED */}
-            {activeTab === 'installed' && (
-              <div className="space-y-3">
-                <h2 className="text-[17px] font-bold">Установленные ({installedList.length})</h2>
-                {installedList.length === 0 ? (
-                  <div className="py-14 text-center text-white/50 text-[13.5px]">
-                    У вас пока нет виртуально установленных твиков. Откройте раздел «Featured» или «Packages».
-                  </div>
-                ) : (
-                  <div className={`${storeTheme.cardBg} rounded-2xl border border-white/10 divide-y divide-white/10`}>
-                    {installedList.map((tweak) => (
-                      <div key={tweak.id} className="p-3.5 flex items-center justify-between gap-3">
-                        <div
-                          onClick={() => setSelectedTweak(tweak)}
-                          className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
-                        >
-                          <TweakBadgeIcon tweak={tweak} sizeClass="w-10 h-10 rounded-xl text-[15px]" />
-                          <div className="min-w-0">
-                            <div className="text-[14px] font-semibold truncate">{tweak.name}</div>
-                            <div className="text-[11px] text-emerald-400 font-medium">
-                              Installed • v{tweak.version}
-                            </div>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => runTweakOperation('remove', tweak)}
-                          className="px-3 py-1.5 rounded-xl bg-red-500/20 border border-red-500/30 text-red-300 text-[12px] font-semibold active:scale-95"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* TAB 5: SEARCH */}
-            {activeTab === 'search' && (
-              <div className="space-y-3">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Поиск твиков, авторов, описаний..."
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-white/10 border border-white/15 text-[13.5px] text-white placeholder-white/45 outline-none"
-                />
-                <div className={`${storeTheme.cardBg} rounded-2xl border border-white/10 divide-y divide-white/10`}>
-                  {filteredSearch.length === 0 ? (
-                    <div className="p-6 text-center text-white/45 text-[13px]">Ничего не найдено</div>
-                  ) : (
-                    filteredSearch.map((tweak) => (
-                      <div
-                        key={tweak.id}
-                        onClick={() => setSelectedTweak(tweak)}
-                        className="p-3.5 flex items-center justify-between gap-3 cursor-pointer active:bg-white/5"
-                      >
-                        <TweakBadgeIcon tweak={tweak} sizeClass="w-10 h-10 rounded-xl text-[15px]" />
-                        <div className="flex-1 min-w-0">
-                          <div className="text-[14px] font-semibold truncate">{tweak.name}</div>
-                          <div className="text-[11.5px] text-white/55 truncate">{tweak.shortDesc}</div>
-                        </div>
-                        <span className="text-white/40">›</span>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            )}
-// ... existing code ... -->
-                <div className="flex items-center gap-3.5">
-                  <TweakBadgeIcon tweak={selectedTweak} sizeClass="w-16 h-16 rounded-2xl text-2xl shadow-lg" />
-                  <div className="flex-1 min-w-0">
-                    <h2 className="text-[20px] font-bold truncate">{selectedTweak.name}</h2>
-                    <p className="text-[12.5px] text-white/60">Автор: {selectedTweak.author}</p>
-                    <p className="text-[11.5px] text-white/45">{selectedTweak.repo}</p>
-                  </div>
-                </div>
-// ... existing code ... -->
-    /* =========================================================================
-       9. STOCK IOS APPS (Settings + Gravitation Prefs, Safari, Camera, Phone, Messages, etc.)
-    ========================================================================= */
-    function StockAppView({
-      appId,
-      isJailbroken,
-      installedPMs,
-      installedTweaks,
-      gravitationSettings,
-      setGravitationSettings,
-      onResetAllProgress
-    }) {
-      const [settingsSubPage, setSettingsSubPage] = useState(null); // null | 'gravitation'
-      const [dialNum, setDialNum] = useState('');
-      const [safariUrl, setSafariUrl] = useState('https://endorphin-jb.sim');
-      const [messages, setMessages] = useState([
-        { from: 'them', text: 'Привет! Попробовал новый Endorphin 2.1.4 на iPhone?' },
-        { from: 'me', text: 'Да, только что поставил Sileo и Gravitation!' }
-      ]);
-      const [msgInput, setMsgInput] = useState('');
-      const [shutterFlash, setShutterFlash] = useState(false);
-
-      if (appId === 'settings') {
-        if (settingsSubPage === 'gravitation') {
-          const toggles = [
-            { key: 'enabled', label: 'Enable Gravitation' },
-            { key: 'shakeActivation', label: 'Enable Shake Activation' },
-            { key: 'deviceTilt', label: 'Enable Device Tilt' },
-            { key: 'iconRotation', label: 'Enable Icon Rotation' },
-            { key: 'dockGravity', label: 'Enable Dock Gravity' }
-          ];
-
-          const sliders = [
-            { key: 'gravityStrength', label: 'Gravity Strength', min: 0.3, max: 2.5, step: 0.1, unit: 'x' },
-            { key: 'bounciness', label: 'Bounciness', min: 0.1, max: 0.92, step: 0.02, unit: '' },
-            { key: 'friction', label: 'Friction', min: 0.85, max: 0.99, step: 0.01, unit: '' },
-            { key: 'animationSpeed', label: 'Animation Speed', min: 0.4, max: 1.8, step: 0.1, unit: 'x' }
-          ];
-
-          return (
-            <div className="scroll-area w-full h-full bg-[#000000] text-white px-4 pt-3 pb-8 space-y-5">
-              <div className="flex items-center justify-between">
-                <button
-                  onClick={() => setSettingsSubPage(null)}
-                  className="text-sky-400 text-[15px] font-medium flex items-center gap-1"
-                >
-                  ‹ Настройки
-                </button>
-                <span className="text-[15px] font-semibold">Gravitation</span>
-                <span className="w-16" />
+                <div id="jb-logs" class="space-y-1"></div>
               </div>
 
-              <div className="rounded-2xl bg-gradient-to-br from-violet-600/35 to-fuchsia-600/25 border border-white/15 p-4 flex items-center gap-3.5">
-                <TweakBadgeIcon tweak={TWEAKS_CATALOG[0]} sizeClass="w-12 h-12 rounded-xl" />
-                <div>
-                  <div className="text-[16px] font-bold">Gravitation v1.0.0</div>
-                  <div className="text-[12px] text-white/65">2D Home Screen Physics Engine</div>
-                </div>
-              </div>
-
-              {/* Toggle Controls */}
-              <div className="bg-[#1c1c1e] rounded-2xl divide-y divide-white/10">
-                {toggles.map((item) => (
-                  <div key={item.key} className="px-4 py-3 flex items-center justify-between">
-                    <span className="text-[14.5px]">{item.label}</span>
-                    <button
-                      onClick={() =>
-                        setGravitationSettings((prev) => ({ ...prev, [item.key]: !prev[item.key] }))
-                      }
-                      className={`w-12 h-7 rounded-full p-0.5 transition-colors ${
-                        gravitationSettings[item.key] ? 'bg-emerald-500' : 'bg-white/20'
-                      }`}
-                    >
-                      <div
-                        className={`w-6 h-6 rounded-full bg-white transition-transform ${
-                          gravitationSettings[item.key] ? 'translate-x-5' : 'translate-x-0'
-                        }`}
-                      />
-                    </button>
-                  </div>
-                ))}
-              </div>
-
-              {/* Physics Sliders */}
-              <div className="bg-[#1c1c1e] rounded-2xl divide-y divide-white/10">
-                {sliders.map((s) => (
-                  <div key={s.key} className="px-4 py-3 space-y-2">
-                    <div className="flex items-center justify-between text-[13.5px]">
-                      <span>{s.label}</span>
-                      <span className="font-mono-code text-white/60">
-                        {Number(gravitationSettings[s.key]).toFixed(2)}{s.unit}
-                      </span>
-                    </div>
-                    <input
-                      type="range"
-                      min={s.min}
-                      max={s.max}
-                      step={s.step}
-                      value={gravitationSettings[s.key]}
-                      onChange={(e) =>
-                        setGravitationSettings((prev) => ({
-                          ...prev,
-                          [s.key]: parseFloat(e.target.value)
-                        }))
-                      }
-                      className="w-full accent-fuchsia-500"
-                    />
-                  </div>
-                ))}
-              </div>
-
-              <button
-                onClick={() => setGravitationSettings(DEFAULT_GRAVITATION_SETTINGS)}
-                className="w-full py-3 rounded-2xl bg-[#1c1c1e] text-sky-400 font-semibold text-[14.5px] active:bg-white/10"
-              >
-                Сбросить настройки Gravitation
-              </button>
+              <!-- Interactive Prompt -->
+              <form id="jb-form" class="mt-2 pt-2 border-t border-zinc-800/90 flex items-center gap-1.5 text-[13px]">
+                <span class="text-emerald-400 font-bold shrink-0">root@iphone:~#</span>
+                <input id="jb-cmd-input" type="text" autocomplete="off" spellcheck="false" maxlength="24" class="terminal-input flex-1" placeholder="_" />
+              </form>
             </div>
-          );
-        }
+          `;
 
-        return (
-          <div className="scroll-area w-full h-full bg-[#000000] text-white px-4 pt-3 pb-6 space-y-5">
-// ... existing code ... -->
-            {/* Installed Tweaks Section inside Settings */}
-            {installedTweaks.length > 0 && (
+        case 'loader':
+          return `
+            <div class="w-full h-full bg-[#0d0d11] text-white pt-16 pb-12 px-5 flex flex-col justify-between overflow-y-auto app-scroll">
               <div>
-                <div className="text-[11px] font-semibold uppercase tracking-wider text-white/45 px-2 mb-1.5">
-                  TWEAKS (PREFERENCELOADER)
+                <div class="flex items-center justify-between mb-6">
+                  <div>
+                    <h1 class="text-2xl font-bold tracking-tight">Ra1nLoader</h1>
+                    <p class="text-xs text-zinc-400 mt-0.5">Bootstrap Manager • voidra1n</p>
+                  </div>
+                  <span class="px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[11px] font-semibold">
+                    Active
+                  </span>
                 </div>
-                <div className="bg-[#1c1c1e] rounded-2xl divide-y divide-white/10 text-[14.5px]">
-                  {TWEAKS_CATALOG.filter((t) => installedTweaks.includes(t.id)).map((t) => (
-                    <button
-                      key={t.id}
-                      onClick={() => {
-                        if (t.id === 'gravitation') setSettingsSubPage('gravitation');
-                      }}
-                      className="w-full px-4 py-3 flex items-center justify-between active:bg-white/5 text-left"
-                    >
-                      <div className="flex items-center gap-3">
-                        <TweakBadgeIcon tweak={t} sizeClass="w-7 h-7 rounded-lg text-[12px]" />
-                        <span>{t.name}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[12px] text-emerald-400">
-                          {t.id === 'gravitation' ? (gravitationSettings.enabled ? 'On' : 'Off') : 'Enabled'}
-                        </span>
-                        {t.id === 'gravitation' && <span className="text-white/40 text-lg">›</span>}
-                      </div>
-                    </button>
-                  ))}
+
+                <!-- System Info Card -->
+                <div class="rounded-2xl bg-zinc-900/90 border border-white/10 p-4 mb-5 space-y-2.5 text-xs">
+                  <div class="flex justify-between">
+                    <span class="text-zinc-400">Устройство</span>
+                    <span class="font-medium">iPhone 15 Pro (iPhone16,1)</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-zinc-400">Версия iOS</span>
+                    <span class="font-medium">17.5.1 (21F90)</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-zinc-400">Архитектура</span>
+                    <span class="font-mono text-purple-300">iphoneos-arm64e</span>
+                  </div>
+                </div>
+
+                <div class="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-3 px-1">
+                  Доступные менеджеры пакетов
+                </div>
+
+                <!-- Amethyst Package Manager Card -->
+                <div class="rounded-3xl bg-gradient-to-br from-[#23133a] via-[#191226] to-[#121217] border border-purple-500/30 p-5 shadow-xl">
+                  <div class="flex items-center gap-4 mb-4">
+                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#581c87] to-[#2e1065] border border-purple-400/40 flex items-center justify-center shadow-[0_0_20px_rgba(168,85,247,0.4)] shrink-0">
+                      <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none">
+                        <polygon points="12,2 20,8 17,21 7,21 4,8" fill="#a855f7" stroke="#f3e8ff" stroke-width="1.4"/>
+                        <polyline points="4,8 12,11 20,8" stroke="#f3e8ff" stroke-width="1.1"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <h2 class="text-lg font-bold text-white">Аметист</h2>
+                      <p class="text-xs text-purple-200/75 leading-snug">Современный менеджер твиков и репозиториев нового поколения.</p>
+                    </div>
+                  </div>
+
+                  <button id="btn-install-amethyst" class="w-full py-3.5 rounded-2xl font-semibold text-sm transition-all flex items-center justify-center gap-2 ${
+                    state.isAmethystInstalled
+                      ? 'bg-zinc-800 text-zinc-400 cursor-default'
+                      : 'bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 text-white shadow-lg shadow-purple-600/30 active:scale-[0.98]'
+                  }">
+                    ${state.isAmethystInstalled ? '✓ Аметист уже установлен' : 'Установить Аметист'}
+                  </button>
                 </div>
               </div>
-            )}
-// ... existing code ... -->
-      // Jailbreak & Package Managers Progress State
-      const [isJailbroken, setIsJailbroken] = useState(saved?.isJailbroken ?? false);
-      const [selectedPMs, setSelectedPMs] = useState(saved?.selectedPMs ?? ['Sileo']);
-      const [installedPMs, setInstalledPMs] = useState(saved?.installedPMs ?? []);
-      const [newlyInstalledPMs, setNewlyInstalledPMs] = useState([]);
-      const [installedTweaks, setInstalledTweaks] = useState(saved?.installedTweaks ?? ['ellekit']);
-      const [gravitationSettings, setGravitationSettings] = useState(
-        saved?.gravitationSettings ?? DEFAULT_GRAVITATION_SETTINGS
-      );
-      const [gravitationActive, setGravitationActive] = useState(false);
-      const [repos, setRepos] = useState(saved?.repos ?? DEFAULT_REPOS);
-// ... existing code ... -->
-      // Persist State in localStorage
-      useEffect(() => {
-        try {
-          localStorage.setItem(
-            STORAGE_KEY,
-            JSON.stringify({
-              isJailbroken,
-              selectedPMs,
-              installedPMs,
-              installedTweaks,
-              gravitationSettings,
-              repos,
-              jbSettings,
-              notifications,
-              guideDismissed: !showInstallGuide
-            })
-          );
-        } catch (e) {}
-      }, [isJailbroken, selectedPMs, installedPMs, installedTweaks, gravitationSettings, repos, jbSettings, notifications, showInstallGuide]);
 
-      // Automatically deactivate Gravitation if uninstalled or disabled
-      useEffect(() => {
-        if (!installedTweaks.includes('gravitation') || !gravitationSettings.enabled) {
-          setGravitationActive(false);
-        }
-      }, [installedTweaks, gravitationSettings.enabled]);
-// ... existing code ... -->
-      // App Lifecycle Handlers
-      const openApp = (appId) => {
-        setGravitationActive(false);
-        setIsLocked(false);
-        setIsSwitcherOpen(false);
-        setIsControlCenterOpen(false);
-        setIsNotificationCenterOpen(false);
-        setActiveApp(appId);
-        setOpenApps((prev) => (prev.includes(appId) ? prev : [...prev, appId]));
-      };
-// ... existing code ... -->
-      const handleResetAllProgress = () => {
-        localStorage.removeItem(STORAGE_KEY);
-        setIsJailbroken(false);
-        setSelectedPMs(['Sileo']);
-        setInstalledPMs([]);
-        setInstalledTweaks(['ellekit']);
-        setGravitationSettings(DEFAULT_GRAVITATION_SETTINGS);
-        setGravitationActive(false);
-        setRepos(DEFAULT_REPOS);
-        setActiveApp(null);
-        setIsLocked(true);
-        addNotification('Система', 'Симулятор iPhone сброшен к начальному состоянию.', 'settings');
-      };
-// ... existing code ... -->
-                  {/* Home Screen Layer */}
-                  <HomeScreen
-                    installedPMs={installedPMs}
-                    newlyInstalledPMs={newlyInstalledPMs}
-                    installedTweaksCount={installedTweaks.length}
-                    isJailbroken={isJailbroken}
-                    isGravitationInstalled={installedTweaks.includes('gravitation')}
-                    gravitationSettings={gravitationSettings}
-                    gravitationActive={gravitationActive}
-                    setGravitationActive={setGravitationActive}
-                    onOpenApp={openApp}
-                    onOpenControlCenter={() => setIsControlCenterOpen(true)}
-                    onLockScreen={() => {
-                      setGravitationActive(false);
-                      goHome();
-                      setIsLocked(true);
-                    }}
-                    addNotification={addNotification}
-                  />
-// ... existing code ... -->
-                        ) : (
-                          <StockAppView
-                            appId={activeApp}
-                            isJailbroken={isJailbroken}
-                            installedPMs={installedPMs}
-                            installedTweaks={installedTweaks}
-                            gravitationSettings={gravitationSettings}
-                            setGravitationSettings={setGravitationSettings}
-                            onResetAllProgress={handleResetAllProgress}
-                          />
-                        )}
+              <div class="text-center text-[11px] text-zinc-500">
+                Ra1nLoader v2.0 • Нажмите Установить для респринга
+              </div>
+            </div>
+          `;
+
+        case 'amethyst':
+          return buildAmethystUI();
+
+        case 'settings':
+          return `
+            <div class="w-full h-full bg-[#000000] text-white pt-16 pb-12 px-4 overflow-y-auto app-scroll">
+              <h1 class="text-3xl font-bold tracking-tight mb-4 px-1">Настройки</h1>
+
+              <!-- Apple ID Card -->
+              <div class="rounded-2xl bg-[#1c1c1e] p-3.5 flex items-center gap-3.5 mb-5">
+                <div class="w-14 h-14 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-xl font-bold">
+                  iP
+                </div>
+                <div>
+                  <div class="font-semibold text-[16px]">iPhone Пользователь</div>
+                  <div class="text-xs text-zinc-400">Apple ID, iCloud+, медиа и покупки</div>
+                </div>
+              </div>
+
+              <!-- Jailbreak Status Section -->
+              <div class="rounded-2xl bg-[#1c1c1e] divide-y divide-zinc-800 mb-5 overflow-hidden text-[14px]">
+                <div class="p-3.5 flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <span class="w-7 h-7 rounded-lg bg-purple-600 flex items-center justify-center text-xs font-bold">JB</span>
+                    <span>Статус системы</span>
+                  </div>
+                  <span class="${state.isJailbroken ? 'text-emerald-400 font-semibold' : 'text-zinc-400'}">
+                    ${state.isJailbroken ? 'Jailbroken (voidra1n)' : 'Stock iOS'}
+                  </span>
+                </div>
+                <div class="p-3.5 flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <span class="w-7 h-7 rounded-lg bg-zinc-600 flex items-center justify-center text-xs">⚙️</span>
+                    <span>Версия ПО</span>
+                  </div>
+                  <span class="text-zinc-400">iOS 17.5.1</span>
+                </div>
+              </div>
+
+              <!-- Standard Settings List -->
+              <div class="rounded-2xl bg-[#1c1c1e] divide-y divide-zinc-800 overflow-hidden text-[14px]">
+                <div class="p-3.5 flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <span class="w-7 h-7 rounded-lg bg-blue-500 flex items-center justify-center text-xs">📶</span>
+                    <span>Wi-Fi</span>
+                  </div>
+                  <span class="text-zinc-400">Home_5G</span>
+                </div>
+                <div class="p-3.5 flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <span class="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center text-xs">ᛒ</span>
+                    <span>Bluetooth</span>
+                  </div>
+                  <span class="text-zinc-400">Вкл.</span>
+                </div>
+                <div class="p-3.5 flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <span class="w-7 h-7 rounded-lg bg-green-500 flex items-center justify-center text-xs">🔋</span>
+                    <span>Аккумулятор</span>
+                  </div>
+                  <span class="text-zinc-400">100%</span>
+                </div>
+                <div class="p-3.5 flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <span class="w-7 h-7 rounded-lg bg-indigo-500 flex items-center justify-center text-xs">🌙</span>
+                    <span>Экран и яркость</span>
+                  </div>
+                  <span class="text-zinc-400">Тёмная</span>
+                </div>
+              </div>
+            </div>
+          `;
+
+        case 'appstore':
+          return `
+            <div class="w-full h-full bg-[#000000] text-white pt-16 pb-12 px-4 overflow-y-auto app-scroll">
+              <div class="flex items-center justify-between mb-4">
+                <h1 class="text-3xl font-bold tracking-tight">Сегодня</h1>
+                <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold">iP</div>
+              </div>
+
+              <!-- Featured Card -->
+              <div class="rounded-3xl overflow-hidden bg-gradient-to-br from-blue-600 via-indigo-700 to-purple-800 p-5 mb-5 shadow-lg">
+                <div class="text-[11px] font-bold uppercase tracking-wider text-blue-200 mb-1">Выбор редакции</div>
+                <div class="text-2xl font-extrabold leading-tight mb-2">Мир креативных инструментов</div>
+                <p class="text-xs text-blue-100/80 mb-4">Создавайте графику, музыку и код прямо на вашем iPhone.</p>
+                <div class="flex items-center justify-between bg-black/25 backdrop-blur-md rounded-2xl p-3">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-10 h-10 rounded-xl bg-amber-400 text-black font-black flex items-center justify-center">Pr</div>
+                    <div>
+                      <div class="text-xs font-bold">Procreate Pocket</div>
+                      <div class="text-[10px] text-zinc-300">Графика и дизайн</div>
+                    </div>
+                  </div>
+                  <button class="px-4 py-1.5 rounded-full bg-white text-blue-600 font-bold text-xs">Загрузить</button>
+                </div>
+              </div>
+
+              <h2 class="text-lg font-bold mb-3">Популярное сейчас</h2>
+              <div class="space-y-3">
+                ${[
+                  { name: 'Telegram', sub: 'Быстрый мессенджер', color: 'bg-sky-500', icon: '✈️' },
+                  { name: 'Spotify', sub: 'Музыка и подкасты', color: 'bg-emerald-500', icon: '🎧' },
+                  { name: 'Notion', sub: 'Заметки и базы знаний', color: 'bg-zinc-800', icon: '📝' }
+                ].map(item => `
+                  <div class="flex items-center justify-between bg-[#1c1c1e] p-3 rounded-2xl">
+                    <div class="flex items-center gap-3">
+                      <div class="w-11 h-11 rounded-xl ${item.color} flex items-center justify-center text-lg">${item.icon}</div>
+                      <div>
+                        <div class="text-sm font-semibold">${item.name}</div>
+                        <div class="text-xs text-zinc-400">${item.sub}</div>
                       </div>
                     </div>
-                  )}
-// ... existing code ... -->
+                    <button class="px-3.5 py-1 rounded-full bg-zinc-800 text-blue-400 font-semibold text-xs">Открыть</button>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `;
+
+        case 'music':
+          return `
+            <div class="w-full h-full bg-gradient-to-b from-[#2b0912] via-[#14070b] to-[#000000] text-white pt-16 pb-12 px-6 flex flex-col justify-between">
+              <div class="text-center">
+                <div class="text-[11px] uppercase tracking-widest text-rose-300/70 font-semibold">Сейчас играет</div>
+              </div>
+
+              <!-- Album Cover -->
+              <div class="mx-auto w-64 h-64 rounded-3xl bg-gradient-to-tr from-rose-600 via-fuchsia-600 to-indigo-600 shadow-[0_20px_50px_rgba(244,63,94,0.35)] flex items-center justify-center relative overflow-hidden">
+                <div class="w-24 h-24 rounded-full bg-black/25 backdrop-blur-md flex items-center justify-center border border-white/20">
+                  <svg class="w-12 h-12 text-white" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M9 18V6l11-2v12"/><circle cx="6.5" cy="18" r="2.8"/><circle cx="17.5" cy="16" r="2.8"/>
+                  </svg>
+                </div>
+              </div>
+
+              <!-- Track Info & Controls -->
+              <div class="space-y-5">
+                <div>
+                  <div class="text-xl font-bold">Midnight Kernel</div>
+                  <div class="text-sm text-rose-300/80">voidra1n Synthwave</div>
+                </div>
+
+                <!-- Progress bar -->
+                <div>
+                  <div class="w-full h-1.5 bg-white/15 rounded-full overflow-hidden">
+                    <div class="w-2/3 h-full bg-white rounded-full"></div>
+                  </div>
+                  <div class="flex justify-between text-[10px] text-zinc-400 mt-1.5">
+                    <span>2:14</span>
+                    <span>-1:08</span>
+                  </div>
+                </div>
+
+                <!-- Playback buttons -->
+                <div class="flex items-center justify-around py-2">
+                  <button class="text-white/80 hover:text-white text-2xl">⏮</button>
+                  <button id="btn-music-toggle" class="w-16 h-16 rounded-full bg-white text-black flex items-center justify-center text-2xl shadow-lg active:scale-95 transition-transform">
+                    ${state.musicPlaying ? '⏸' : '▶'}
+                  </button>
+                  <button class="text-white/80 hover:text-white text-2xl">⏭</button>
+                </div>
+              </div>
+            </div>
+          `;
+
+        case 'safari':
+          return `
+            <div class="w-full h-full bg-[#121214] text-white pt-16 pb-12 px-4 flex flex-col justify-between">
+              <div class="overflow-y-auto app-scroll space-y-5">
+                <h1 class="text-2xl font-bold px-1">Избранное</h1>
+                <div class="grid grid-cols-4 gap-3 text-center">
+                  ${[
+                    { label: 'Apple', bg: 'bg-zinc-800', icon: '' },
+                    { label: 'GitHub', bg: 'bg-neutral-800', icon: 'GH' },
+                    { label: 'iOS Wiki', bg: 'bg-indigo-600', icon: 'W' },
+                    { label: 'Аметист', bg: 'bg-purple-700', icon: '💎' }
+                  ].map(fav => `
+                    <div class="flex flex-col items-center gap-1.5">
+                      <div class="w-14 h-14 rounded-2xl ${fav.bg} flex items-center justify-center text-lg font-bold shadow">${fav.icon}</div>
+                      <span class="text-[11px] text-zinc-300">${fav.label}</span>
+                    </div>
+                  `).join('')}
+                </div>
+
+                <div class="rounded-2xl bg-[#1c1c1e] p-4 border border-white/5">
+                  <div class="text-xs font-semibold text-purple-400 mb-1">Отчёт о конфиденциальности</div>
+                  <div class="text-sm text-zinc-300">Safari заблокировал 14 трекеров за последние 7 дней.</div>
+                </div>
+              </div>
+
+              <!-- Bottom Safari Address Bar -->
+              <div class="rounded-2xl bg-[#252529] border border-white/10 px-4 py-2.5 flex items-center justify-between text-xs text-zinc-300">
+                <span>🔒</span>
+                <span class="font-medium text-white">apple.com/ru</span>
+                <span>↻</span>
+              </div>
+            </div>
+          `;
+
+        case 'notes':
+          const activeNote = state.notes.find(n => n.id === state.selectedNoteId) || state.notes[0];
+          return `
+            <div class="w-full h-full bg-[#000000] text-white pt-16 pb-12 px-4 flex flex-col">
+              <div class="flex items-center justify-between mb-3">
+                <h1 class="text-2xl font-bold text-amber-400">Заметки</h1>
+                <span class="text-xs text-zinc-400">${state.notes.length} заметки</span>
+              </div>
+
+              <div class="flex gap-2 mb-3 overflow-x-auto app-scroll">
+                ${state.notes.map(n => `
+                  <button data-note-id="${n.id}" class="note-tab-btn px-3 py-1.5 rounded-xl text-xs font-medium shrink-0 ${
+                    n.id === activeNote.id ? 'bg-amber-400 text-black' : 'bg-[#1c1c1e] text-zinc-300'
+                  }">${n.title}</button>
+                `).join('')}
+              </div>
+
+              <div class="flex-1 rounded-2xl bg-[#1c1c1e] p-4 flex flex-col">
+                <div class="text-[11px] text-zinc-400 mb-2">${activeNote.date}</div>
+                <textarea id="note-editor" class="w-full flex-1 bg-transparent resize-none outline-none text-sm leading-relaxed text-zinc-100">${activeNote.text}</textarea>
+              </div>
+            </div>
+          `;
+      }
+    }
+
+    /*****************************************************************
+     * AMETHYST PACKAGE MANAGER UI
+     *****************************************************************/
+    function buildAmethystUI() {
+      const tab = state.amethystTab;
+      let bodyHtml = '';
+
+      if (tab === 'home') {
+        bodyHtml = `
+          <div class="space-y-4">
+            <!-- Hero Banner -->
+            <div class="rounded-3xl bg-gradient-to-br from-[#581c87] via-[#3b0764] to-[#1e1b4b] border border-purple-400/30 p-5 relative overflow-hidden">
+              <div class="text-[11px] font-bold uppercase tracking-wider text-purple-300 mb-1">Аметист 1.0 • Rootless</div>
+              <div class="text-xl font-extrabold text-white mb-1.5">Добро пожаловать в Аметист</div>
+              <p class="text-xs text-purple-200/80 leading-relaxed">Устанавливайте лучшие твики и темы для вашего джейлбрейкнутого iPhone.</p>
+            </div>
+
+            <div class="text-xs font-bold uppercase tracking-wider text-purple-300/70 px-1">Рекомендуемые твики</div>
+            <div class="space-y-2.5">
+              ${TWEAKS_DATA.slice(0, 4).map(t => renderTweakCard(t)).join('')}
+            </div>
+          </div>
+        `;
+      } else if (tab === 'sources') {
+        bodyHtml = `
+          <div class="space-y-3">
+            <div class="flex items-center justify-between px-1">
+              <span class="text-xs font-bold uppercase tracking-wider text-purple-300/70">Репозитории (${SOURCES_DATA.length})</span>
+              <span class="text-xs text-purple-400 font-semibold">+ Добавить</span>
+            </div>
+            ${SOURCES_DATA.map(src => `
+              <div class="rounded-2xl bg-[#1a1329] border border-purple-500/20 p-3.5 flex items-center justify-between">
+                <div>
+                  <div class="text-sm font-bold text-white">${src.name}</div>
+                  <div class="text-[11px] text-purple-300/60 font-mono">${src.url}</div>
+                </div>
+                <span class="px-2.5 py-1 rounded-full bg-purple-500/15 text-purple-300 text-xs font-semibold">${src.count}</span>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      } else if (tab === 'packages') {
+        const installedList = TWEAKS_DATA.filter(t => state.installedTweaks.has(t.id));
+        bodyHtml = `
+          <div class="space-y-3">
+            <div class="text-xs font-bold uppercase tracking-wider text-purple-300/70 px-1">
+              Установленные пакеты (${installedList.length})
+            </div>
+            ${installedList.length === 0
+              ? `<div class="text-center text-xs text-zinc-400 py-10">Нет установленных твиков</div>`
+              : installedList.map(t => renderTweakCard(t)).join('')
+            }
+          </div>
+        `;
+      } else if (tab === 'search') {
+        const q = state.amethystSearch.trim().toLowerCase();
+        const filtered = TWEAKS_DATA.filter(t =>
+          t.name.toLowerCase().includes(q) || t.desc.toLowerCase().includes(q) || t.author.toLowerCase().includes(q)
+        );
+        bodyHtml = `
+          <div class="space-y-3">
+            <input id="amethyst-search-input" type="text" value="${state.amethystSearch}" placeholder="Поиск твиков, тем, авторов..."
+              class="w-full rounded-2xl bg-[#1a1329] border border-purple-500/30 px-4 py-2.5 text-sm text-white placeholder-purple-300/40 outline-none focus:border-purple-400" />
+            <div class="space-y-2.5">
+              ${filtered.map(t => renderTweakCard(t)).join('')}
+            </div>
+          </div>
+        `;
+      }
+
+      const titles = { home: 'Главная', sources: 'Источники', packages: 'Пакеты', search: 'Поиск' };
+
+      return `
+        <div class="w-full h-full bg-[#0d0914] text-white pt-15 flex flex-col">
+          <!-- Header -->
+          <div class="pt-14 px-5 pb-3 flex items-center justify-between border-b border-purple-500/15 bg-[#0d0914]/90 backdrop-blur-md">
+            <div class="flex items-center gap-2.5">
+              <div class="w-7 h-7 rounded-lg bg-purple-600/30 border border-purple-400/40 flex items-center justify-center">
+                <svg class="w-4 h-4 text-purple-300" viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="12,2 20,8 17,21 7,21 4,8"/>
+                </svg>
+              </div>
+              <h1 class="text-xl font-bold tracking-tight">${titles[tab]}</h1>
+            </div>
+            <span class="text-[11px] font-semibold text-purple-300 bg-purple-500/15 px-2.5 py-0.5 rounded-full">Аметист</span>
+          </div>
+
+          <!-- Scrollable Content -->
+          <div class="flex-1 overflow-y-auto app-scroll px-4 py-4">
+            ${bodyHtml}
+          </div>
+
+          <!-- Bottom Tab Bar -->
+          <div class="pb-8 pt-2.5 px-3 bg-[#130d1f] border-t border-purple-500/20 grid grid-cols-4 gap-1">
+            ${[
+              { id: 'home', label: 'Главная', icon: '🏠' },
+              { id: 'sources', label: 'Источники', icon: '🌐' },
+              { id: 'packages', label: 'Пакеты', icon: '📦' },
+              { id: 'search', label: 'Поиск', icon: '🔍' }
+            ].map(item => `
+              <button data-am-tab="${item.id}" class="am-tab-btn flex flex-col items-center gap-1 py-1 rounded-xl transition-colors ${
+                tab === item.id ? 'text-purple-400 font-semibold' : 'text-zinc-500 hover:text-zinc-300'
+              }">
+                <span class="text-base leading-none">${item.icon}</span>
+                <span class="text-[10px]">${item.label}</span>
+              </button>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderTweakCard(tweak) {
+      const installed = state.installedTweaks.has(tweak.id);
+      return `
+        <div class="rounded-2xl bg-[#181126] border border-purple-500/20 p-3.5 flex items-center justify-between gap-3">
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-bold text-white truncate">${tweak.name}</span>
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-300 font-mono">${tweak.version}</span>
+            </div>
+            <div class="text-[11px] text-purple-300/60 mb-1">от ${tweak.author} • ${tweak.cat}</div>
+            <p class="text-xs text-zinc-300/90 line-clamp-2 leading-snug">${tweak.desc}</p>
+          </div>
+          <button data-tweak-id="${tweak.id}" class="tweak-toggle-btn shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+            installed
+              ? 'bg-zinc-800 text-rose-300 border border-rose-500/30'
+              : 'bg-purple-600 hover:bg-purple-500 text-white shadow-md shadow-purple-600/25'
+          }">
+            ${installed ? 'Удалить' : 'Скачать'}
+          </button>
+        </div>
+      `;
+    }
+
+    /*****************************************************************
+     * EVENT BINDINGS INSIDE APPS
+     *****************************************************************/
+    function bindAppEvents(appId) {
+      if (appId === 'voidra1n') {
+        const form = document.getElementById('jb-form');
+        const input = document.getElementById('jb-cmd-input');
+        form.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const val = input.value.trim();
+          input.value = '';
+          handleJailbreakCommand(val);
+        });
+      }
+
+      if (appId === 'loader') {
+        const btn = document.getElementById('btn-install-amethyst');
+        if (btn && !state.isAmethystInstalled) {
+          btn.addEventListener('click', () => {
+            btn.disabled = true;
+            btn.innerHTML = 'Загрузка пакетов Аметиста...';
+            setTimeout(() => {
+              triggerRespring(() => {
+                state.isAmethystInstalled = true;
+                closeActiveApp(false);
+                renderHomeScreen(true);
+              });
+            }, 600);
+          });
+        }
+      }
+
+      if (appId === 'amethyst') {
+        document.querySelectorAll('.am-tab-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            state.amethystTab = btn.getAttribute('data-am-tab');
+            document.getElementById('app-content').innerHTML = buildAmethystUI();
+            bindAppEvents('amethyst');
+          });
+        });
+
+        document.querySelectorAll('.tweak-toggle-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const id = btn.getAttribute('data-tweak-id');
+            if (state.installedTweaks.has(id)) {
+              state.installedTweaks.delete(id);
+            } else {
+              state.installedTweaks.add(id);
+            }
+            document.getElementById('app-content').innerHTML = buildAmethystUI();
+            bindAppEvents('amethyst');
+          });
+        });
+
+        const searchInput = document.getElementById('amethyst-search-input');
+        if (searchInput) {
+          searchInput.focus();
+          searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+          searchInput.addEventListener('input', (e) => {
+            state.amethystSearch = e.target.value;
+            document.getElementById('app-content').innerHTML = buildAmethystUI();
+            bindAppEvents('amethyst');
+          });
+        }
+      }
+
+      if (appId === 'music') {
+        const toggle = document.getElementById('btn-music-toggle');
+        toggle.addEventListener('click', () => {
+          state.musicPlaying = !state.musicPlaying;
+          toggle.textContent = state.musicPlaying ? '⏸' : '▶';
+          const di = document.getElementById('dynamic-island');
+          const diLeft = document.getElementById('di-left');
+          if (state.musicPlaying) {
+            di.classList.add('expanded');
+            diLeft.textContent = '♫ Playing';
+            diLeft.style.opacity = '1';
+          } else {
+            di.classList.remove('expanded');
+            diLeft.style.opacity = '0';
+          }
+        });
+      }
+
+      if (appId === 'notes') {
+        document.querySelectorAll('.note-tab-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            state.selectedNoteId = Number(btn.getAttribute('data-note-id'));
+            document.getElementById('app-content').innerHTML = buildAppUI('notes');
+            bindAppEvents('notes');
+          });
+        });
+        const editor = document.getElementById('note-editor');
+        editor.addEventListener('input', (e) => {
+          const note = state.notes.find(n => n.id === state.selectedNoteId);
+          if (note) note.text = e.target.value;
+        });
+      }
+    }
+
+    /*****************************************************************
+     * JAILBREAK EXECUTION & BOOT SCREEN SEQUENCE
+     *****************************************************************/
+    function handleJailbreakCommand(cmd) {
+      const logsContainer = document.getElementById('jb-logs');
+      const outputScroll = document.getElementById('jb-output');
+      const input = document.getElementById('jb-cmd-input');
+
+      // Echo user command
+      const echo = document.createElement('div');
+      echo.innerHTML = `<span class="text-emerald-400">root@iphone:~#</span> <span class="text-white">${escapeHtml(cmd)}</span>`;
+      logsContainer.appendChild(echo);
+
+      // STRICT CHECK: Only '1' starts jailbreak; anything else crashes app!
+      if (cmd !== '1') {
+        const errLine = document.createElement('div');
+        errLine.className = 'text-rose-500 font-bold';
+        errLine.textContent = `[!] FATAL: Segmentation fault (core dumped) — invalid opcode "${cmd}"`;
+        logsContainer.appendChild(errLine);
+        outputScroll.scrollTop = outputScroll.scrollHeight;
+
+        const appWindow = document.getElementById('app-window');
+        appWindow.classList.add('crashed');
+
+        setTimeout(() => {
+          closeActiveApp(true);
+        }, 500);
+        return;
+      }
+
+      // Valid command '1' -> Disable input & stream 5 seconds of realistic kernel logs
+      input.disabled = true;
+      input.placeholder = 'running...';
+
+      const exploitLogs = [
+        { t: 150, text: '[*] Initializing voidra1n exploit chain...', cls: 'text-cyan-300' },
+        { t: 450, text: '[*] Exploiting kernel (puaf_physpuppet)...', cls: 'text-zinc-300' },
+        { t: 800, text: '[+] Acquired kernel r/w primitives!', cls: 'text-emerald-400' },
+        { t: 1150, text: '[+] Found kernel base: 0xfffffff007004000', cls: 'text-emerald-400' },
+        { t: 1500, text: '[*] Calculating kernel slide: 0x0000000018a40000', cls: 'text-zinc-300' },
+        { t: 1850, text: '[*] Bypassing PAC & PPL protections...', cls: 'text-amber-300' },
+        { t: 2250, text: '[*] Patching AMFI & Sandbox MACF hooks...', cls: 'text-zinc-300' },
+        { t: 2650, text: '[+] Sandbox escaped! uid=0(root) gid=0(wheel)', cls: 'text-emerald-400' },
+        { t: 3050, text: '[+] Mounting rootfs & /var/jb as read/write...', cls: 'text-emerald-400' },
+        { t: 3450, text: '[*] Extracting procursus bootstrap.tar.zst...', cls: 'text-zinc-300' },
+        { t: 3850, text: '[*] Injecting ElleKit & trustcache...', cls: 'text-cyan-300' },
+        { t: 4250, text: '[*] Preparing Ra1nLoader.app...', cls: 'text-purple-300' },
+        { t: 4650, text: '[+] Triggering userspace reboot...', cls: 'text-amber-400 font-bold' }
+      ];
+
+      exploitLogs.forEach(entry => {
+        setTimeout(() => {
+          const line = document.createElement('div');
+          line.className = entry.cls;
+          line.textContent = entry.text;
+          logsContainer.appendChild(line);
+          outputScroll.scrollTop = outputScroll.scrollHeight;
+        }, entry.t);
+      });
+
+      // After 5 seconds -> Custom Boot Screen
+      setTimeout(() => {
+        runCustomBootSequence();
+      }, 5000);
+    }
+
+    function runCustomBootSequence() {
+      state.isBooting = true;
+
+      const bootOverlay = document.getElementById('boot-overlay');
+      const appleStage = document.getElementById('boot-apple-stage');
+      const chessOverlay = document.getElementById('boot-chess-overlay');
+      const respringSpinner = document.getElementById('respring-spinner');
+      const statusBar = document.getElementById('status-bar');
+      const gestureZone = document.getElementById('gesture-zone');
+
+      // Hide UI chrome & show black screen with Apple + Chess boot logo
+      statusBar.style.opacity = '0';
+      gestureZone.style.display = 'none';
+      respringSpinner.classList.add('hidden');
+      appleStage.classList.remove('hidden');
+      chessOverlay.style.opacity = '1';
+      bootOverlay.classList.add('active');
+
+      // Clean up open terminal behind overlay
+      document.getElementById('app-window').classList.remove('open');
+      document.getElementById('app-content').innerHTML = '';
+      state.activeApp = null;
+
+      // Stage 1: Apple + Chess pieces hang for 3 seconds, then chess disappears
+      setTimeout(() => {
+        chessOverlay.style.opacity = '0';
+      }, 3000);
+
+      // Stage 2: Plain white Apple logo remains for another 1.5 seconds (total 4.5s)
+      setTimeout(() => {
+        state.isJailbroken = true;
+        state.isBooting = false;
+
+        // Update Home Screen & Lock Screen badge
+        renderHomeScreen(true);
+        document.getElementById('ls-jb-badge').classList.remove('hidden');
+
+        // Put phone onto Lock Screen
+        state.isLocked = true;
+        const lockScreen = document.getElementById('lock-screen');
+        const homeScreen = document.getElementById('home-screen');
+        lockScreen.classList.remove('unlocked');
+        lockScreen.style.transform = 'translateY(0)';
+        lockScreen.style.opacity = '1';
+        homeScreen.classList.add('behind-lock');
+
+        // Hide boot screen & restore status bar / home indicator
+        bootOverlay.classList.remove('active');
+        appleStage.classList.add('hidden');
+        statusBar.style.opacity = '1';
+        gestureZone.style.display = 'flex';
+      }, 4500);
+    }
+
+    /*****************************************************************
+     * RESPRING ANIMATION (2 SECONDS)
+     *****************************************************************/
+    function triggerRespring(callback) {
+      state.isBooting = true;
+      const bootOverlay = document.getElementById('boot-overlay');
+      const appleStage = document.getElementById('boot-apple-stage');
+      const respringSpinner = document.getElementById('respring-spinner');
+      const statusBar = document.getElementById('status-bar');
+      const gestureZone = document.getElementById('gesture-zone');
+
+      statusBar.style.opacity = '0';
+      gestureZone.style.display = 'none';
+      appleStage.classList.add('hidden');
+      respringSpinner.classList.remove('hidden');
+      respringSpinner.classList.add('flex');
+      bootOverlay.classList.add('active');
+
+      setTimeout(() => {
+        bootOverlay.classList.remove('active');
+        respringSpinner.classList.add('hidden');
+        respringSpinner.classList.remove('flex');
+        statusBar.style.opacity = '1';
+        gestureZone.style.display = 'flex';
+        state.isBooting = false;
+        if (callback) callback();
+      }, 2000);
+    }
+
+    /*****************************************************************
+     * HELPERS & INITIALIZATION
+     *****************************************************************/
+    function escapeHtml(str) {
+      return str.replace(/[&<>"']/g, m => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[m]));
+    }
+
+    function buildSpinnerSpokes() {
+      const container = document.getElementById('spinner-spokes');
+      let html = '';
+      for (let i = 0; i < 12; i++) {
+        const deg = i * 30;
+        const delay = -(1 - i / 12).toFixed(2);
+        html += `<div style="transform: rotate(${deg}deg); animation-delay: ${delay}s;"></div>`;
+      }
+      container.innerHTML = html;
+    }
+
+    function fitDeviceToViewport() {
+      const stage = document.getElementById('device-stage');
+      const targetW = 390;
+      const targetH = 844;
+      const padding = 28;
+      const scaleX = (window.innerWidth - padding) / targetW;
+      const scaleY = (window.innerHeight - padding) / targetH;
+      const scale = Math.min(1, scaleX, scaleY);
+      stage.style.transform = `scale(${scale})`;
+    }
+
+    // Lock screen buttons
+    document.getElementById('btn-flashlight').addEventListener('click', (e) => {
+      state.flashlightOn = !state.flashlightOn;
+      e.currentTarget.classList.toggle('active', state.flashlightOn);
+      document.querySelector('.ambient-glow').style.background = state.flashlightOn
+        ? 'radial-gradient(circle, rgba(255, 255, 255, 0.32) 0%, rgba(139, 92, 246, 0.12) 55%, transparent 75%)'
+        : 'radial-gradient(circle, rgba(139, 92, 246, 0.18) 0%, rgba(59, 130, 246, 0.08) 45%, transparent 70%)';
+    });
+
+    document.getElementById('btn-camera').addEventListener('click', () => {
+      unlockPhone();
+    });
+
+    document.getElementById('btn-power').addEventListener('click', () => {
+      if (state.isLocked) unlockPhone();
+      else lockPhone();
+    });
+
+    // Boot up app
+    window.addEventListener('resize', fitDeviceToViewport);
+    fitDeviceToViewport();
+    buildSpinnerSpokes();
+    updateClock();
+    setInterval(updateClock, 1000);
+    renderHomeScreen(false);
+    initSwipeGestures();
+  </script>
+</body>
+</html>
